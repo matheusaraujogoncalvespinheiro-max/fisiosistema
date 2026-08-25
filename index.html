@@ -366,7 +366,7 @@
                         <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Pomodoro</span>
                     </button>
 
-                    <button onclick="AndroidOS.openApp('admin')" class="flex flex-col items-center group active:scale-90 transition relative">
+                    <button id="btn-admin-home" onclick="AndroidOS.openApp('admin')" class="flex flex-col items-center group active:scale-90 transition relative hidden">
                         <div class="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center text-[9px] font-black text-slate-900 border-2 border-slate-900">ADM</div>
                         <div class="w-14 h-14 rounded-2xl bg-amber-600/30 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-lg group-hover:scale-105 transition">
                             <i data-lucide="shield-check" class="w-7 h-7"></i>
@@ -582,8 +582,8 @@
                 const grid = document.getElementById('drawer-grid');
                 if (!grid) return;
                 grid.innerHTML = '';
-
                 Object.keys(this.apps).forEach(appId => {
+                    if(appId==='admin' && !AuthManager.isAdmin) return;
                     const app = this.apps[appId];
                     const btn = document.createElement('button');
                     btn.className = 'flex flex-col items-center group active:scale-90 transition drawer-item';
@@ -1758,8 +1758,11 @@
                 const loginEl=document.getElementById('user-login-home');
                 const avEl=document.getElementById('user-avatar');
                 if(nameEl && this.current){ nameEl.textContent=this.current.nome||this.current.login; if(loginEl) loginEl.textContent='@'+this.current.login + (this.isAdmin?' • Administrador':''); if(avEl) avEl.textContent=(this.current.nome||this.current.login).charAt(0).toUpperCase(); }
+                const admBtn=document.getElementById('btn-admin-home');
+                if(admBtn){ admBtn.classList.toggle('hidden', !this.isAdmin); }
+                AndroidOS.renderDrawerList();
+                lucide.createIcons();
                 this.atualizarHomeNotificacao();
-                // se for ADM, migra usuarios locais para nuvem (100% online)
                 if(this.isAdmin){
                     setTimeout(()=>{ try{ AuthManager.forcarSyncCelular(); }catch(e){} },1500);
                 }
