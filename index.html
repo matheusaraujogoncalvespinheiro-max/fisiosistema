@@ -1570,55 +1570,68 @@
             },
             templates: {
                 'Anatomia': [
-                    {q:'O osso {a} e classificado como:', opts:['Longo','Curto','Plano','Sesamoide'], c:3, exp:'Patela e sesamoide, dentro de tendao.'},
-                    {q:'A articulacao {a} e do tipo:', opts:['Fibrosa','Cartilaginea','Sinovial esferoide','Sinovial ginglimo'], c:2, exp:'Esferoide permite 3 eixos.'},
-                    {q:'O musculo {a} tem acao principal de:', opts:['Rotacao lateral','Flexao','Extensao','Abducao'], c:0, exp:'Acao principal de {a}.'},
-                    {q:'O dermatomos {a} corresponde a:', opts:['Polegar','Indicador','Ombro lateral','Coxa'], c:0, exp:'Mapear {a}.'}
+                    {q:'O osso patela e classificado como:', opts:['Longo','Curto','Plano','Sesamoide'], c:3, exp:'Patela e sesamoide, dentro do tendao quadricipital.'},
+                    {q:'A articulacao glenoumeral e do tipo:', opts:['Fibrosa','Cartilaginea','Sinovial esferoide','Sinovial ginglimo'], c:2, exp:'Glenoumeral e esferoide, triaxial.'},
+                    {q:'O musculo supraespinal tem acao principal de:', opts:['Abducao inicial 0-15','Flexao','Extensao','Rotacao medial'], c:0, exp:'Supraespinal inicia abducao.'},
+                    {q:'O dermatomos C6 corresponde a:', opts:['Polegar','Indicador','Ombro lateral','Coxa'], c:0, exp:'C6 polegar.'},
+                    {q:'O nervo mediano inerva:', opts:['Polegar e indicador','Dorso do pe','Coxa','Gluteo'], c:0, exp:'Mediano polegar/indicador.'},
+                    {q:'O femur e classificado como:', opts:['Longo','Curto','Plano','Sesamoide'], c:0, exp:'Femur longo.'},
+                    {q:'A sutura do cranio e articulacao:', opts:['Fibrosa','Sinovial','Cartilaginea','Esferoide'], c:0, exp:'Sutura fibrosa.'},
+                    {q:'Manguito rotador inclui:', opts:['Supra, infra, redondo menor, subescapular','Biceps, triceps','Quadriceps','Soleo'], c:0, exp:'S.I.T.E.'}
                 ],
                 'Cinesiologia': [
-                    {q:'Plano {a} tem eixo {b}. Movimento tipico:', opts:['Flexao/extensao','Abducao/aducao','Rotacao','Todos'], c:0, exp:'Plano {a} eixo {b}.'},
-                    {q:'Contracao {a}: o musculo', opts:['Encurta','Alonga sob tensao','Fica isometrico','Relaxa'], c:1, exp:'{a} alonga controlando carga.'},
-                    {q:'Cadeia cinetica {a}: exemplo', opts:['Agachamento','Cadeira extensora','Rosca direta','Elevacao lateral'], c:0, exp:'CCF vs CCA.'}
+                    {q:'Plano sagital tem eixo frontal. Movimento tipico:', opts:['Flexao/extensao','Abducao/aducao','Rotacao','Todos'], c:0, exp:'Sagital flexao/extensao.'},
+                    {q:'Contracao excentrica: o musculo', opts:['Encurta','Alonga sob tensao','Fica isometrico','Relaxa'], c:1, exp:'Excentrica alonga controlando.'},
+                    {q:'Cadeia cinetica fechada: exemplo', opts:['Agachamento','Cadeira extensora','Rosca direta','Elevacao lateral'], c:0, exp:'Pe fixo CCF.'},
+                    {q:'Plano frontal tem eixo sagital. Movimento:', opts:['Abducao/aducao','Flexao','Rotacao','Todos'], c:0, exp:'Frontal abducao.'},
+                    {q:'Contracao concentrica: o musculo', opts:['Encurta','Alonga','Isometrico','Relaxa'], c:0, exp:'Concentrica encurta.'}
                 ],
                 'Biomecanica': [
                     {q:'Torque =', opts:['Forca x braco de alavanca','Forca + braco','Forca / braco','Forca - braco'], c:0, exp:'T = F x d.'},
                     {q:'Q-angle normal:', opts:['5 graus','13-18 graus','30 graus','0 graus'], c:1, exp:'13-15H, 15-18M.'},
-                    {q:'Centro de massa em pe fica em:', opts:['S2','C7','Cabeca','Pe'], c:0, exp:'S2 anterior.'}
+                    {q:'Centro de massa em pe fica em:', opts:['S2','C7','Cabeca','Pe'], c:0, exp:'S2 anterior.'},
+                    {q:'Alavanca do biceps e de:', opts:['1a classe','2a classe','3a classe','Nenhuma'], c:2, exp:'3a classe, forca no meio.'}
                 ],
                 'Fisiologia': [
                     {q:'Debito cardiaco =', opts:['FC x VS','FC + VS','VS','FC'], c:0, exp:'DC = FC x VS.'},
-                    {q:'VO2max indica:', opts:['Capacidade aerobica','Forca maxima','Flexibilidade','Equilibrio'], c:0, exp:'Consumo maximo de O2.'}
+                    {q:'VO2max indica:', opts:['Capacidade aerobica','Forca maxima','Flexibilidade','Equilibrio'], c:0, exp:'VO2max aerobica.'},
+                    {q:'Frequencia cardiaca alvo usa:', opts:['Karvonen','Borg','Glasgow','Ashworth'], c:0, exp:'Karvonen.'}
                 ],
                 'Cardiorresp': [
-                    {q:'Manobra {a} serve para:', opts:['Higiene bronquica','Fortalecimento','Relaxamento','Analgesia'], c:0, exp:'{a} mobiliza secrecao.'},
-                    {q:'SpO2 88% indica:', opts:['Normal','Hipoxemia leve','Hipoxemia moderada','Grave'], c:2, exp:'<90 hipoxemia, intervir.'}
+                    {q:'Manobra ELTGOL serve para:', opts:['Higiene bronquica','Fortalecimento','Relaxamento','Analgesia'], c:0, exp:'ELTGOL higiene.'},
+                    {q:'SpO2 88% indica:', opts:['Normal','Hipoxemia leve','Hipoxemia moderada','Grave'], c:2, exp:'<90 hipoxemia.'},
+                    {q:'Diafragma e inervado por:', opts:['Frenico C3-C5','Vago','Intercostal','Ciático'], c:0, exp:'Frenico C3-C5.'}
                 ],
                 'Neurofuncional': [
-                    {q:'Escala {a} avalia:', opts:['Consciencia','Forca','Dor','ADM'], c:0, exp:'{a} avalia nivel neurologico.'},
-                    {q:'Hemiparesia significa:', opts:['Fraqueza de metade do corpo','Paralisia total','Fraqueza so de MMII','Sem alteracao'], c:0, exp:'Hemi = metade.'}
+                    {q:'Escala de Glasgow avalia:', opts:['Consciencia','Forca','Dor','ADM'], c:0, exp:'Glasgow consciencia.'},
+                    {q:'Hemiparesia significa:', opts:['Fraqueza de metade do corpo','Paralisia total','Fraqueza so de MMII','Sem alteracao'], c:0, exp:'Hemi metade.'},
+                    {q:'Miotomo L4 testa:', opts:['Dorsiflexao','Flexao plantar','Flexao quadril','Extensao punho'], c:0, exp:'L4 dorsiflexao.'}
                 ],
                 'Traumato-Ortopedia': [
-                    {q:'Teste de {a} avalia:', opts:['LCA','LCP','Menisco','Impacto subacromial'], c:0, exp:'{a} teste especial.'},
-                    {q:'Fratura de {a}: mecanismo classico', opts:['Queda com mao espalmada','Tracao','Torcao','Nenhum'], c:0, exp:'Mecanismo de {a}.'}
+                    {q:'Teste de Lachman avalia:', opts:['LCA','LCP','Menisco','Impacto subacromial'], c:0, exp:'Lachman LCA.'},
+                    {q:'Fratura de Colles: mecanismo', opts:['Queda com mao espalmada','Tracao','Torcao','Nenhum'], c:0, exp:'Colles mao espalmada.'},
+                    {q:'Sinal de Phalen testa:', opts:['Tunel do carpo','LCA','Manguito','Menisco'], c:0, exp:'Phalen mediano.'}
                 ],
                 'Eletroterapia': [
-                    {q:'{a} usa:', opts:['80-100Hz','1-4Hz','3MHz','Todos'], c:0, exp:'Parametro de {a}.'},
-                    {q:'Crioterapia na fase aguda:', opts:['15-20 min','1 min','60 min','2 horas'], c:0, exp:'15-20 min.'}
+                    {q:'TENS convencional usa:', opts:['80-100Hz','1-4Hz','3MHz','Todos'], c:0, exp:'TENS 80-100Hz.'},
+                    {q:'Crioterapia na fase aguda:', opts:['15-20 min','1 min','60 min','2 horas'], c:0, exp:'15-20 min.'},
+                    {q:'FES indica:', opts:['Fortalecimento motor','Analgesia','Relaxamento','Drenagem'], c:0, exp:'FES motor.'}
                 ],
                 'Recursos Manuais': [
-                    {q:'Liberacao miofascial visa:', opts:['Deslizamento fascial','Aderencia','Dor','Nada'], c:0, exp:'Melhora deslizamento.'},
-                    {q:'Maitland grau {a} é:', opts:['Oscilatorio','Sustentado','Rapido','Nenhum'], c:0, exp:'Maitland.'}
+                    {q:'Liberacao miofascial visa:', opts:['Deslizamento fascial','Aderencia','Dor','Nada'], c:0, exp:'Deslizamento.'},
+                    {q:'Maitland grau I-II é:', opts:['Oscilatorio suave','Sustentado','Rapido','Nenhum'], c:0, exp:'Grau I-II oscilatorio.'}
                 ],
                 'Saude Coletiva': [
-                    {q:'SUS principio da {a}:', opts:['Universalidade','Equidade','Integralidade','Todos'], c:0, exp:'Principio {a}.'}
+                    {q:'SUS principio da universalidade:', opts:['Acesso para todos','Equidade','Integralidade','Hierarquia'], c:0, exp:'Universalidade acesso.'},
+                    {q:'SUS principio da integralidade:', opts:['Cuidado completo','Acesso','Equidade','Nenhum'], c:0, exp:'Integralidade cuidado completo.'}
                 ],
                 'Etica/SOAP': [
-                    {q:'SOAP: S significa', opts:['Subjetivo','Objetivo','Avaliacao','Plano'], c:0, exp:'S = Subjetivo.'},
+                    {q:'SOAP: S significa', opts:['Subjetivo','Objetivo','Avaliacao','Plano'], c:0, exp:'S Subjetivo.'},
                     {q:'CIF classifica:', opts:['Funcionalidade','Doenca','Dor','Estrutura'], c:0, exp:'CIF funcionalidade.'}
                 ],
                 'Avaliacao': [
-                    {q:'Goniometro mede:', opts:['ADM','Forca','Dor','Equilibrio'], c:0, exp:'Goniometria ADM.'},
-                    {q:'Borg avalia:', opts:['Esforco percebido','Dor','Forca','Nada'], c:0, exp:'Esforco percebido.'}
+                    {q:'Goniometro mede:', opts:['ADM','Forca','Dor','Equilibrio'], c:0, exp:'ADM.'},
+                    {q:'Borg avalia:', opts:['Esforco percebido','Dor','Forca','Nada'], c:0, exp:'Borg esforco.'}
                 ]
             },
             // variantes coerentes por materia (evita "osso universalidade")
