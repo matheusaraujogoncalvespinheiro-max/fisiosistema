@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RHUTHER OS">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f9b4.png">
+    <title>RHUTHER OS - Android Fisioterapia</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Firebase SDK (compat para simplicidade) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        android: {
+                            bg: '#0f172a',
+                            card: '#1e293b',
+                            accent: '#14b8a6',
+                            accentLight: '#2dd4bf',
+                            surface: '#0f172a',
+                            surfaceVariant: '#1e293b',
+                            primaryContainer: '#134e4a',
+                            onPrimaryContainer: '#ccfbf1',
+                            secondaryContainer: '#1e3a8a',
+                            onSecondaryContainer: '#dbeafe'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'Inter', 'system-ui', 'sans-serif']
+                    },
+                    borderRadius: {
+                        '4xl': '2rem',
+                        '5xl': '2.5rem'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Roboto', 'Inter', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Material You Glass & Shadows */
+        .material-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .material-dialog {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        /* Android Animations */
+        .android-app-enter {
+            animation: appSlideUp 0.28s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        .android-app-exit {
+            animation: appSlideDown 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+
+        @keyframes appSlideUp {
+            from { transform: translateY(100%) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes appSlideDown {
+            from { transform: translateY(0) scale(1); opacity: 1; }
+            to { transform: translateY(100%) scale(0.95); opacity: 0; }
+        }
+
+        .shade-enter {
+            animation: shadeDown 0.25s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes shadeDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Custom Scrollbar for Android Lists */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(20, 184, 166, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(20, 184, 166, 0.7);
+        }
+
+        /* Wallpapers */
+        .wp-material-1 {
+            background: radial-gradient(circle at top right, #0d9488 0%, #0f172a 60%, #0284c7 100%);
+        }
+        .wp-material-2 {
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 70%, #090d16 100%);
+        }
+        .wp-material-3 {
+            background: linear-gradient(160deg, #134e4a 0%, #0f172a 50%, #312e81 100%);
+        }
+
+        .wave-canvas {
+            background-color: #09131d;
+        }
+        /* === MOBILE ADAPTATION === */
+        html, body { height: 100%; height: 100dvh; }
+        #phone-frame { height: 100dvh; }
+        @media (max-width: 640px) {
+            #phone-frame { border: none !important; border-radius: 0 !important; max-width: 100% !important; height: 100dvh !important; }
+            #app-body { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+            #nav-bar { padding-bottom: env(safe-area-inset-bottom); height: calc(2.5rem + env(safe-area-inset-bottom)); }
+            .grid-cols-4 { gap: 0.75rem !important; }
+            .w-14.h-14 { width: 3.25rem !important; height: 3.25rem !important; }
+        }
+        @media (min-width: 768px) {
+            body { background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); }
+        }
+        /* touch targets >=44px */
+        button, a, [onclick] { min-height: 44px; }
+        #app-body button { min-height: 48px; }
+        /* safe area */
+        #status-bar { padding-top: max(0.375rem, env(safe-area-inset-top)); }
+        /* smooth scroll, prevent zoom on input */
+        input, textarea, select { font-size: 16px !important; }
+        @supports (-webkit-touch-callout: none) { body { -webkit-overflow-scrolling: touch; } }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 flex justify-center items-center select-none overscroll-none" id="android-body" style="padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);">
+    <!-- LOGIN SCREEN (cobre tudo, some após logar) -->
+    <div id="login-screen" class="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center p-6 overflow-y-auto">
+        <div class="w-full max-w-sm space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-xl shadow-teal-500/20">
+                    <i data-lucide="graduation-cap" class="w-10 h-10 text-white"></i>
+                </div>
+                <h1 class="text-2xl font-black text-white tracking-tight">RHUTHER OS</h1>
+                <p class="text-xs font-bold tracking-widest text-teal-300">FISIOTERAPIA • ANDROID EDITION</p>
+            </div>
+            <div class="bg-slate-900 rounded-3xl border border-white/10 p-6 space-y-4 shadow-2xl">
+                <div class="space-y-1">
+                    <label class="text-[11px] font-black tracking-widest text-slate-400">LOGIN</label>
+                    <div class="relative">
+                        <i data-lucide="user" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500"></i>
+                        <input id="login-user" type="text" placeholder="seu login" autocomplete="username" class="w-full bg-slate-950 border border-slate-700 rounded-2xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-500">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[11px] font-black tracking-widest text-slate-400">SENHA</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500"></i>
+                        <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') AuthManager.login()" class="w-full bg-slate-950 border border-slate-700 rounded-2xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-500">
+                    </div>
+                </div>
+                <div id="login-error" class="hidden p-3 rounded-2xl bg-rose-950/60 border border-rose-500/30 text-rose-200 text-xs text-center"></div>
+                <button onclick="AuthManager.login()" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-slate-950 rounded-2xl font-black text-sm shadow-lg shadow-teal-500/20 active:scale-[0.98] transition">ENTRAR</button>
+                <p class="text-[11px] text-center text-slate-500">Após o primeiro login, entra direto. Só pede novamente se fizer logoff.</p>
+            </div>
+            <p class="text-center text-[10px] text-slate-600 opacity-0">RHUTHER OS</p>
+        </div>
+    </div>
+
+    <!-- ANDROID DEVICE CONTAINER (Simulates Phone/Tablet Frame or Fullscreen on Mobile) -->
+    <div id="phone-frame" class="relative w-full h-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl h-full sm:h-[95vh] sm:rounded-[40px] sm:border-[8px] sm:border-slate-800 shadow-2xl overflow-hidden flex flex-col wp-material-1 transition-all duration-500">
+        
+        <!-- ANDROID STATUS BAR -->
+        <div id="status-bar" onclick="AndroidOS.toggleShade()" class="w-full h-8 px-5 pt-1.5 flex justify-between items-center text-xs font-semibold tracking-wider text-slate-200 z-50 bg-black/20 backdrop-blur-md cursor-pointer hover:bg-black/30 transition">
+            <div class="flex items-center space-x-2">
+                <span id="android-clock">12:00</span>
+                <i data-lucide="bell" id="status-notif-icon" class="w-3 h-3 text-teal-400 hidden"></i>
+            </div>
+            <div class="flex items-center space-x-2.5">
+                <i data-lucide="wifi" class="w-3.5 h-3.5 text-teal-300"></i>
+                <i data-lucide="signal" class="w-3.5 h-3.5 text-slate-300"></i>
+                <div class="flex items-center space-x-1">
+                    <span class="text-[10px]">98%</span>
+                    <i data-lucide="battery-charging" class="w-4 h-4 text-emerald-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANDROID NOTIFICATION & QUICK SETTINGS SHADE (PULL-DOWN) -->
+        <div id="quick-shade" class="hidden absolute top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-2xl p-5 border-b border-white/10 shadow-2xl shade-enter flex flex-col space-y-4">
+            <div class="flex justify-between items-center text-xs text-slate-400 pt-2">
+                <span id="shade-date" class="font-bold text-slate-200 text-sm">Segunda, 24 de Agosto</span>
+                <button onclick="AndroidOS.toggleShade()" class="p-1 rounded-full bg-slate-800 hover:bg-slate-700">
+                    <i data-lucide="chevron-up" class="w-4 h-4 text-slate-200"></i>
+                </button>
+            </div>
+
+            <!-- Quick Toggles -->
+            <div class="grid grid-cols-4 gap-3 text-center">
+                <button onclick="AndroidOS.toggleToggle('wifi', this)" class="quick-toggle p-3 rounded-2xl bg-teal-500 text-slate-950 flex flex-col items-center justify-center space-y-1 transition active:scale-95">
+                    <i data-lucide="wifi" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Wi-Fi</span>
+                </button>
+                <button onclick="AndroidOS.toggleToggle('bluetooth', this)" class="quick-toggle p-3 rounded-2xl bg-teal-500 text-slate-950 flex flex-col items-center justify-center space-y-1 transition active:scale-95">
+                    <i data-lucide="bluetooth" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Bluetooth</span>
+                </button>
+                <button onclick="AndroidOS.toggleSound()" id="shade-sound-btn" class="quick-toggle p-3 rounded-2xl bg-slate-800 text-teal-300 flex flex-col items-center justify-center space-y-1 transition active:scale-95">
+                    <i data-lucide="volume-2" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Som</span>
+                </button>
+                <button onclick="AndroidOS.toggleToggle('dnd', this)" class="quick-toggle p-3 rounded-2xl bg-slate-800 text-slate-300 flex flex-col items-center justify-center space-y-1 transition active:scale-95">
+                    <i data-lucide="moon" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Não Perturbe</span>
+                </button>
+            </div>
+
+            <!-- Brightness Slider -->
+            <div class="flex items-center space-x-3 bg-slate-800/60 p-2.5 rounded-2xl">
+                <i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+                <input type="range" min="30" max="100" value="100" oninput="AndroidOS.setBrightness(this.value)" class="w-full accent-teal-400 h-1.5 rounded-lg">
+            </div>
+
+            <!-- Notification Cards -->
+            <div class="space-y-2 pt-2">
+                <div class="text-xs font-bold text-teal-400 uppercase tracking-wider">Notificações</div>
+                <div class="p-3 bg-slate-800/80 rounded-2xl border border-white/5 flex items-start space-x-3">
+                    <div class="p-2 bg-teal-500/20 text-teal-300 rounded-xl"><i data-lucide="graduation-cap" class="w-4 h-4"></i></div>
+                    <div class="flex-1 text-xs">
+                        <div class="font-bold text-slate-200">RHUTHER OS Fisioterapia</div>
+                        <div class="text-slate-400 text-[11px] mt-0.5">Bem-vindo ao sistema de estudo Android de Fisioterapia!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANDROID MAIN VIEWPORT (HOME / APP DRAWER / APP SCREENS) -->
+        <div id="android-viewport" class="relative flex-1 overflow-hidden">
+            
+            <!-- HOME SCREEN -->
+            <div id="home-screen" class="w-full h-full p-5 flex flex-col justify-between overflow-y-auto">
+                
+                <!-- TOP WIDGETS -->
+                <div class="space-y-4">
+                    <!-- Material Clock & Weather Widget -->
+                    <div class="p-5 material-card rounded-3xl flex justify-between items-center shadow-lg">
+                        <div>
+                            <div id="widget-time" class="text-4xl font-extrabold tracking-tight text-white">12:00</div>
+                            <div id="widget-date" class="text-xs font-medium text-teal-300 mt-1">Segunda, 24 de Agosto</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex items-center space-x-1 justify-end text-amber-300 font-bold text-sm">
+                                <i data-lucide="sun" class="w-5 h-5"></i>
+                                <span>28°C</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Palmas - TO</div>
+                        </div>
+                    </div>
+
+                    <!-- RHUTHER Search / Command Bar Widget -->
+                    <div onclick="AndroidOS.openApp('terminal')" class="material-card p-3 rounded-2xl flex items-center space-x-3 cursor-pointer hover:bg-slate-800/80 transition">
+                        <i data-lucide="search" class="w-4 h-4 text-teal-400"></i>
+                        <span class="text-xs text-slate-400 flex-1">Pesquisar anatomia, testes ou comandos...</span>
+                        <i data-lucide="mic" class="w-4 h-4 text-slate-400"></i>
+                    </div>
+
+                    <!-- Daily Physio Flashcard / Study Widget -->
+                    <div onclick="AndroidOS.openApp('quiz')" class="p-4 bg-gradient-to-r from-teal-900/60 to-slate-900/80 rounded-3xl border border-teal-500/30 cursor-pointer hover:border-teal-400 transition shadow-lg">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-bold text-[9px] uppercase tracking-wider">Dica do Dia • Cinesiologia</span>
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-teal-300"></i>
+                        </div>
+                        <div class="font-bold text-xs text-slate-200">Manguito Rotador (S.I.T.E)</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">Supraespinal, Infraespinal, Redondo Menor e Subescapular atuam na estabilização dinâmica da articulação glenoumeral.</p>
+                    </div>
+                </div>
+
+                <!-- DESKTOP APP ICONS GRID -->
+                <div class="grid grid-cols-4 gap-4 my-auto py-2">
+                    
+                    <button onclick="AndroidOS.openApp('anatomy')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-teal-600/30 border border-teal-400/40 flex items-center justify-center text-teal-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="book-open" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Anatomia</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('tests')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="clipboard-check" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Testes</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('quiz')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-purple-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="brain-circuit" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Quizzes</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('electro')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-600/30 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="zap" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Eletro</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('calc')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-600/30 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="calculator" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Calculadora</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('notes')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-rose-600/30 border border-rose-400/40 flex items-center justify-center text-rose-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="file-text" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">SOAP</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('pomodoro')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-cyan-600/30 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="timer" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Pomodoro</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('settings')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-gray-600/30 border border-gray-400/40 flex items-center justify-center text-gray-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="settings" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Ajustes</span>
+                    </button>
+
+                </div>
+
+                <!-- BOTTOM ANDROID DOCK -->
+                <div class="p-3 material-card rounded-3xl flex justify-around items-center">
+                    <button onclick="AndroidOS.openApp('anatomy')" class="p-2.5 rounded-2xl hover:bg-white/10 active:scale-90 transition text-teal-300">
+                        <i data-lucide="book-open" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="AndroidOS.openApp('tests')" class="p-2.5 rounded-2xl hover:bg-white/10 active:scale-90 transition text-blue-300">
+                        <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="AndroidOS.toggleDrawer()" class="p-3 rounded-2xl bg-teal-500 text-slate-950 active:scale-90 transition shadow-lg">
+                        <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="AndroidOS.openApp('electro')" class="p-2.5 rounded-2xl hover:bg-white/10 active:scale-90 transition text-amber-300">
+                        <i data-lucide="zap" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="AndroidOS.openApp('notes')" class="p-2.5 rounded-2xl hover:bg-white/10 active:scale-90 transition text-rose-300">
+                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- ANDROID APP DRAWER (FULL APPS MENU) -->
+            <div id="app-drawer" class="hidden absolute inset-0 z-30 bg-slate-950/95 backdrop-blur-2xl p-5 flex flex-col justify-between animate-pop-in">
+                <div>
+                    <div class="relative mb-5">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="drawer-search" oninput="AndroidOS.filterDrawer(this.value)" placeholder="Pesquisar aplicativos no RHUTHER OS..." class="w-full bg-slate-900 border border-slate-700/80 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-teal-500">
+                    </div>
+
+                    <div id="drawer-grid" class="grid grid-cols-4 gap-4 overflow-y-auto max-h-[70vh] pr-1">
+                        <!-- Dynamic items generated -->
+                    </div>
+                </div>
+
+                <div class="flex justify-center pb-2">
+                    <button onclick="AndroidOS.toggleDrawer()" class="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white">
+                        <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ANDROID RECENTS / MULTITASKING SCREEN -->
+            <div id="recents-screen" class="hidden absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-xl p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-center text-xs font-bold text-slate-300 pt-2">
+                    <span>Aplicativos Recentes</span>
+                    <button onclick="AndroidOS.clearAllApps()" class="px-3 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded-xl hover:bg-rose-500/30 transition">Fechar Todos</button>
+                </div>
+
+                <div id="recents-list" class="flex space-x-4 overflow-x-auto my-auto py-6 px-2">
+                    <!-- Dynamic cards for open apps -->
+                </div>
+
+                <div class="text-center text-xs text-slate-500 pb-2">Toque em um app para alternar</div>
+            </div>
+
+            <!-- ACTIVE FULLSCREEN APP WINDOW CONTAINER -->
+            <div id="app-window" class="hidden absolute inset-0 z-20 bg-slate-900 flex flex-col overflow-hidden android-app-enter">
+                
+                <!-- Android Material Top App Bar -->
+                <div id="app-top-bar" class="h-12 bg-slate-950/90 border-b border-white/10 px-4 flex items-center justify-between text-slate-200">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="AndroidOS.goBack()" class="p-1.5 rounded-full hover:bg-white/10 active:scale-90 transition">
+                            <i data-lucide="arrow-left" class="w-5 h-5 text-teal-400"></i>
+                        </button>
+                        <div class="flex items-center space-x-2">
+                            <i id="app-icon" data-lucide="book-open" class="w-4 h-4 text-teal-300"></i>
+                            <span id="app-title" class="font-bold text-xs">Título do App</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="AndroidOS.goHome()" class="p-1.5 rounded-full hover:bg-white/10 active:scale-90 transition text-slate-400">
+                            <i data-lucide="minus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Android App Viewport Content -->
+                <div id="app-body" class="flex-1 overflow-y-auto p-4 bg-slate-950 text-xs text-slate-200">
+                    <!-- App Content Injected Here -->
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ANDROID BOTTOM NAVIGATION BAR (BACK, HOME, RECENTS) -->
+        <div id="nav-bar" class="w-full h-10 bg-slate-950/90 border-t border-white/10 flex justify-around items-center z-50">
+            <!-- Back Button -->
+            <button onclick="AndroidOS.navBack()" class="p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Home Button -->
+            <button onclick="AndroidOS.goHome()" class="p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition">
+                <i data-lucide="circle" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Recents Button -->
+            <button onclick="AndroidOS.toggleRecents()" class="p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition">
+                <i data-lucide="square" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast-container" class="fixed top-12 right-4 left-4 sm:left-auto sm:w-80 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- JAVASCRIPT KERNEL ENGINE -->
+    <script>
+        /**
+         * RHUTHER OS - Android Physical Therapy OS Engine
+         */
+        const AndroidOS = {
+            currentApp: null,
+            openApps: [],
+            soundEnabled: true,
+            audioCtx: null,
+
+            init() {
+                this.updateClock();
+                setInterval(() => this.updateClock(), 1000);
+                lucide.createIcons();
+                this.renderDrawerList();
+                this.showToast("RHUTHER OS Android", "Sistema ativado! Pronto para os estudos de fisioterapia.");
+
+                // Audio context initiation on user interaction
+                window.addEventListener('touchstart', () => this.initAudio(), { once: true });
+                window.addEventListener('click', () => this.initAudio(), { once: true });
+            },
+
+            initAudio() {
+                if (!this.audioCtx) {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+
+            playBeep(freq = 500) {
+                if (!this.soundEnabled || !this.audioCtx) return;
+                try {
+                    const osc = this.audioCtx.createOscillator();
+                    const gain = this.audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.04, this.audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.08);
+                    osc.connect(gain);
+                    gain.connect(this.audioCtx.destination);
+                    osc.start();
+                    osc.stop(this.audioCtx.currentTime + 0.08);
+                } catch(e) {}
+            },
+
+            updateClock() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+
+                document.getElementById('android-clock').innerText = timeStr;
+                document.getElementById('widget-time').innerText = timeStr;
+                document.getElementById('widget-date').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+                document.getElementById('shade-date').innerText = dateStr;
+            },
+
+            toggleShade() {
+                const shade = document.getElementById('quick-shade');
+                shade.classList.toggle('hidden');
+                this.playBeep(600);
+            },
+
+            setBrightness(val) {
+                document.getElementById('phone-frame').style.filter = `brightness(${val}%)`;
+            },
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                const btn = document.getElementById('shade-sound-btn');
+                btn.className = `quick-toggle p-3 rounded-2xl flex flex-col items-center justify-center space-y-1 transition active:scale-95 ${this.soundEnabled ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 text-rose-400'}`;
+                this.showToast("Áudio", this.soundEnabled ? "Som ativado" : "Som desativado");
+            },
+
+            toggleToggle(name, btn) {
+                btn.classList.toggle('bg-teal-500');
+                btn.classList.toggle('text-slate-950');
+                btn.classList.toggle('bg-slate-800');
+                btn.classList.toggle('text-slate-300');
+                this.playBeep(700);
+            },
+
+            toggleDrawer() {
+                const drawer = document.getElementById('app-drawer');
+                drawer.classList.toggle('hidden');
+                this.playBeep(550);
+            },
+
+            renderDrawerList() {
+                const grid = document.getElementById('drawer-grid');
+                if (!grid) return;
+                grid.innerHTML = '';
+
+                Object.keys(this.apps).forEach(appId => {
+                    const app = this.apps[appId];
+                    const btn = document.createElement('button');
+                    btn.className = 'flex flex-col items-center group active:scale-90 transition drawer-item';
+                    btn.onclick = () => {
+                        this.toggleDrawer();
+                        this.openApp(appId);
+                    };
+                    btn.innerHTML = `
+                        <div class="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-teal-400 shadow group-hover:scale-105 transition">
+                            <i data-lucide="${app.icon}" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-[10px] font-medium text-slate-300 mt-1.5 leading-tight text-center">${app.title}</span>
+                    `;
+                    grid.appendChild(btn);
+                });
+                lucide.createIcons();
+            },
+
+            filterDrawer(query) {
+                const q = query.toLowerCase();
+                document.querySelectorAll('.drawer-item').forEach(item => {
+                    const text = item.innerText.toLowerCase();
+                    item.style.display = text.includes(q) ? 'flex' : 'none';
+                });
+            },
+
+            openApp(appId) {
+                this.playBeep(650);
+                const appConfig = this.apps[appId];
+                if (!appConfig) return;
+
+                if (!this.openApps.includes(appId)) {
+                    this.openApps.push(appId);
+                }
+
+                this.currentApp = appId;
+
+                // Close overlays
+                document.getElementById('quick-shade').classList.add('hidden');
+                document.getElementById('recents-screen').classList.add('hidden');
+                document.getElementById('app-drawer').classList.add('hidden');
+
+                // Render App Window
+                const win = document.getElementById('app-window');
+                const titleEl = document.getElementById('app-title');
+                const iconEl = document.getElementById('app-icon');
+                const bodyEl = document.getElementById('app-body');
+
+                titleEl.innerText = appConfig.title;
+                iconEl.setAttribute('data-lucide', appConfig.icon);
+                bodyEl.innerHTML = appConfig.render();
+
+                win.classList.remove('hidden');
+                lucide.createIcons();
+
+                if (appConfig.onOpen) {
+                    setTimeout(() => appConfig.onOpen(), 50);
+                }
+            },
+
+            goHome() {
+                this.playBeep(400);
+                document.getElementById('app-window').classList.add('hidden');
+                document.getElementById('recents-screen').classList.add('hidden');
+                document.getElementById('app-drawer').classList.add('hidden');
+                document.getElementById('quick-shade').classList.add('hidden');
+                this.currentApp = null;
+            },
+
+            goBack() {
+                this.goHome();
+            },
+
+            navBack() {
+                if (!document.getElementById('app-window').classList.contains('hidden')) {
+                    this.goHome();
+                } else if (!document.getElementById('recents-screen').classList.contains('hidden')) {
+                    document.getElementById('recents-screen').classList.add('hidden');
+                } else if (!document.getElementById('app-drawer').classList.contains('hidden')) {
+                    document.getElementById('app-drawer').classList.add('hidden');
+                } else if (!document.getElementById('quick-shade').classList.contains('hidden')) {
+                    document.getElementById('quick-shade').classList.add('hidden');
+                } else {
+                    this.playBeep(300);
+                }
+            },
+
+            toggleRecents() {
+                this.playBeep(500);
+                const recents = document.getElementById('recents-screen');
+                const isHidden = recents.classList.contains('hidden');
+
+                if (isHidden) {
+                    this.renderRecentsList();
+                    recents.classList.remove('hidden');
+                    document.getElementById('app-window').classList.add('hidden');
+                    document.getElementById('app-drawer').classList.add('hidden');
+                } else {
+                    recents.classList.add('hidden');
+                }
+            },
+
+            renderRecentsList() {
+                const list = document.getElementById('recents-list');
+                if (!list) return;
+                list.innerHTML = '';
+
+                if (this.openApps.length === 0) {
+                    list.innerHTML = `<div class="text-slate-500 text-xs w-full text-center py-10">Nenhum app recente aberto</div>`;
+                    return;
+                }
+
+                this.openApps.forEach(appId => {
+                    const app = this.apps[appId];
+                    const card = document.createElement('div');
+                    card.className = 'w-48 h-64 bg-slate-900 border border-teal-500/30 rounded-3xl p-3 flex flex-col justify-between shrink-0 shadow-xl cursor-pointer hover:border-teal-400 transition';
+                    card.onclick = () => this.openApp(appId);
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="${app.icon}" class="w-4 h-4 text-teal-300"></i>
+                                <span class="font-bold text-xs text-slate-200 truncate w-24">${app.title}</span>
+                            </div>
+                            <button onclick="event.stopPropagation(); AndroidOS.closeApp('${appId}')" class="p-1 text-slate-400 hover:text-rose-400">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="flex-1 my-2 bg-slate-950/80 rounded-xl p-2 text-[10px] text-slate-400 overflow-hidden opacity-60">
+                            Toque para visualizar
+                        </div>
+                        <div class="text-[9px] text-teal-400 font-semibold text-center">EM EXECUÇÃO</div>
+                    `;
+                    list.appendChild(card);
+                });
+                lucide.createIcons();
+            },
+
+            closeApp(appId) {
+                this.openApps = this.openApps.filter(id => id !== appId);
+                if (this.currentApp === appId) {
+                    this.goHome();
+                }
+                this.renderRecentsList();
+            },
+
+            clearAllApps() {
+                this.openApps = [];
+                this.goHome();
+                this.showToast("Multitarefa", "Todos os aplicativos foram encerrados.");
+            },
+
+            showToast(title, msg) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'material-card p-3 rounded-2xl border border-teal-500/40 shadow-2xl text-xs flex items-start space-x-3 pointer-events-auto animate-pop-in';
+                toast.innerHTML = `
+                    <div class="p-1.5 bg-teal-500/20 text-teal-300 rounded-xl"><i data-lucide="bell" class="w-4 h-4"></i></div>
+                    <div class="flex-1">
+                        <div class="font-bold text-teal-200">${title}</div>
+                        <div class="text-slate-300 text-[11px] mt-0.5">${msg}</div>
+                    </div>
+                `;
+                container.appendChild(toast);
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.4s';
+                    setTimeout(() => toast.remove(), 400);
+                }, 3500);
+            },
+
+            setBg(bgClass) {
+                const frame = document.getElementById('phone-frame');
+                frame.className = `relative w-full h-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl h-full sm:h-[95vh] sm:rounded-[40px] sm:border-[8px] sm:border-slate-800 shadow-2xl overflow-hidden flex flex-col ${bgClass} transition-all duration-500`;
+                this.showToast("Aparelho", "Papel de parede atualizado!");
+            }
+        };
+
+        AndroidOS.apps = {
+
+            // APP 1: ANATOMIA ESTRUTURADA PARA ESTUDOS (12 CAPITULOS COM TRAVA)
+            anatomy: {
+                title: 'Anatomia • Estudos',
+                icon: 'book-open',
+                render: function() { return EstudoAnatomia.render(); },
+                onOpen: function() { EstudoAnatomia.onOpen(); }
+            },
+
+            // APP 2: TESTES CLINICOS
+            tests: {
+                title: 'Testes Clínicos & Ortopédicos',
+                icon: 'clipboard-check',
+                render: function() {
+                    return `
+                        <div class="space-y-3">
+                            <!-- Search & Filter -->
+                            <input type="text" id="test-search" oninput="AndroidOS.filterTests()" placeholder="Buscar teste (ex: Lachman, Phalen, Neer)..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3 py-2 text-slate-200 focus:outline-none focus:border-teal-500 text-xs">
+                            
+                            <!-- Goniometer Widget -->
+                            <div class="p-3 bg-teal-950/60 border border-teal-500/30 rounded-2xl flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i data-lucide="compass" class="w-5 h-5 text-teal-300"></i>
+                                    <div>
+                                        <div class="font-bold text-teal-200">Goniômetro Virtual</div>
+                                        <div class="text-[10px] text-slate-400">ADM Articular</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <input type="range" min="0" max="180" value="90" oninput="document.getElementById('gonio-degree').innerText = this.value + '°'" class="w-24 accent-teal-400">
+                                    <span id="gonio-degree" class="font-bold text-teal-300 w-8 text-right">90°</span>
+                                </div>
+                            </div>
+
+                            <!-- Test List -->
+                            <div id="tests-list" class="space-y-2">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </div>
+                    `;
+                },
+                onOpen: function() {
+                    AndroidOS.filterTests();
+                }
+            },
+
+            // APP 3: QUIZ BANCO DE QUESTOES COM TRAVA (MESMA LOGICA DA CLINICA)
+            quiz: {
+                title: 'Banco de Questões',
+                icon: 'brain-circuit',
+                render: function() { return BancoQuestoes.render(); },
+                onOpen: function() { BancoQuestoes.onOpen(); }
+            },
+
+            // APP 4: ELETROTERAPIA SIMULATOR
+            electro: {
+                title: 'Simulador de Eletroterapia',
+                icon: 'zap',
+                render: function() {
+                    return `
+                        <div class="space-y-4">
+                            <!-- Canvas Display -->
+                            <div class="h-36 rounded-2xl overflow-hidden border border-amber-500/30 relative">
+                                <canvas id="electro-canvas" class="w-full h-full wave-canvas"></canvas>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-3">
+                                <div>
+                                    <label class="block text-slate-400 mb-1">Modalidade</label>
+                                    <select id="electro-type" onchange="AndroidOS.updateElectroWave()" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-amber-300 font-bold focus:outline-none">
+                                        <option value="tens">TENS Convencional (Analgesia)</option>
+                                        <option value="burst">TENS Burst (Endorfinérgico)</option>
+                                        <option value="fes">FES (Fortalecimento Motor)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-slate-300 mb-1">
+                                        <span>Frequência</span>
+                                        <span id="freq-val" class="font-bold text-amber-400">100 Hz</span>
+                                    </div>
+                                    <input type="range" id="freq-range" min="1" max="150" value="100" oninput="AndroidOS.updateElectroWave()" class="w-full accent-amber-500">
+                                </div>
+
+                                <button onclick="AndroidOS.playBeep(900); AndroidOS.showToast('Eletroterapia', 'Pulso elétrico disparado!')" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-slate-950 rounded-2xl shadow transition">Simular Aplicação</button>
+                            </div>
+                        </div>
+                    `;
+                },
+                onOpen: function() {
+                    AndroidOS.updateElectroWave();
+                }
+            },
+
+            // APP 5: CALCULADORA
+            calc: {
+                title: 'Calculadora Fisioterapêutica',
+                icon: 'calculator',
+                render: function() {
+                    return `
+                        <div class="space-y-4">
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-3">
+                                <h4 class="font-bold text-emerald-400 flex items-center">
+                                    <i data-lucide="heart-pulse" class="w-4 h-4 mr-1"></i> Frequência Cardíaca Alvo (Karvonen)
+                                </h4>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-slate-400">Idade</label>
+                                        <input type="number" id="calc-age" value="25" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-slate-200 mt-1">
+                                    </div>
+                                    <div>
+                                        <label class="text-slate-400">FC Repouso</label>
+                                        <input type="number" id="calc-rest" value="70" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-slate-200 mt-1">
+                                    </div>
+                                </div>
+                                <button onclick="AndroidOS.calculateKarvonen()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 font-bold text-white rounded-xl transition">Calcular</button>
+                                <div id="calc-result" class="p-3 bg-emerald-950/50 border border-emerald-500/30 rounded-2xl text-emerald-300 font-bold text-center">
+                                    Resultado: -- bpm
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+
+            // APP 6: BLOCO SOAP
+            notes: {
+                title: 'Anotações & Ficha SOAP',
+                icon: 'file-text',
+                render: function() {
+                    return `
+                        <div class="flex flex-col h-[70vh] space-y-3">
+                            <div class="flex justify-between items-center">
+                                <button onclick="AndroidOS.insertSOAP()" class="px-3 py-1.5 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl font-bold text-[11px]">Inserir SOAP</button>
+                                <button onclick="AndroidOS.saveNotes()" class="px-4 py-1.5 bg-rose-600 font-bold text-white rounded-xl text-[11px]">Salvar</button>
+                            </div>
+                            <textarea id="soap-editor" placeholder="Digite aqui suas anotações fisioterapêuticas..." class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 text-slate-200 font-mono text-xs focus:outline-none focus:border-rose-500 resize-none leading-relaxed"></textarea>
+                        </div>
+                    `;
+                },
+                onOpen: function() {
+                    const saved = localStorage.getItem('rhuther_android_notes');
+                    if (saved) document.getElementById('soap-editor').value = saved;
+                }
+            },
+
+            // APP 7: POMODORO
+            pomodoro: {
+                title: 'Pomodoro de Estudos',
+                icon: 'timer',
+                render: function() {
+                    return `
+                        <div class="flex flex-col items-center justify-center space-y-6 py-8">
+                            <div class="w-44 h-44 rounded-full border-4 border-cyan-500/40 bg-slate-900 flex items-center justify-center shadow-2xl">
+                                <span id="pomo-clock" class="font-mono text-4xl font-bold text-cyan-300">25:00</span>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button onclick="AndroidOS.startPomo()" class="px-6 py-2 bg-cyan-500 font-bold text-slate-950 rounded-2xl shadow">Iniciar</button>
+                                <button onclick="AndroidOS.resetPomo()" class="px-6 py-2 bg-slate-800 font-bold text-slate-300 rounded-2xl">Resetar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+
+            // APP 8: TERMINAL CLI
+            terminal: {
+                title: 'Terminal RHUTHER CLI',
+                icon: 'terminal',
+                render: function() {
+                    return `
+                        <div class="h-[65vh] bg-slate-950 font-mono p-3 rounded-2xl border border-teal-500/30 flex flex-col justify-between">
+                            <div id="term-out" class="overflow-y-auto space-y-1 text-teal-400 text-[11px]">
+                                <div>RHUTHER Android Shell v1.0</div>
+                                <div>Digite 'ajuda' para comandos.</div>
+                            </div>
+                            <div class="flex items-center space-x-2 pt-2 border-t border-slate-800">
+                                <span class="text-teal-400 font-bold">$</span>
+                                <input type="text" id="term-in" onkeydown="if(event.key==='Enter') AndroidOS.execCmd(this.value)" class="flex-1 bg-transparent text-teal-200 text-xs focus:outline-none">
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+
+            // APP 9: PAINEL ADM (só matheus)
+            admin: {
+                title: 'Painel ADM',
+                icon: 'shield-check',
+                render: function(){ return AdminPanel.render(); },
+                onOpen: function(){ AdminPanel.onOpen(); }
+            },
+
+            // APP 10: CONFIGURAÇÕES
+            settings: {
+                title: 'Configurações Android',
+                icon: 'settings',
+                render: function() {
+                    return `
+                        <div class="space-y-4">
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-3">
+                                <h4 class="font-bold text-slate-200">Papel de Parede Material You</h4>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button onclick="AndroidOS.setBg('wp-material-1')" class="h-16 rounded-2xl wp-material-1 border-2 border-white/20"></button>
+                                    <button onclick="AndroidOS.setBg('wp-material-2')" class="h-16 rounded-2xl wp-material-2 border-2 border-white/20"></button>
+                                    <button onclick="AndroidOS.setBg('wp-material-3')" class="h-16 rounded-2xl wp-material-3 border-2 border-white/20"></button>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-1">
+                                <div class="font-bold text-slate-200">Sobre o RHUTHER OS</div>
+                                <div class="text-[11px] text-slate-400">Versão: Android 14 (RHUTHER Physical Therapy Edition)</div>
+                                <div class="text-[11px] text-teal-400 mt-2">Desenvolvido para aprendizagem rápida de Fisioterapia.</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        };
+
+        AndroidOS.loadAnatomyTopic = function(topic) {
+            const body = document.getElementById('anatomy-body');
+            if (!body) return;
+
+            const topics = {
+                ombro: `
+                    <h3 class="font-bold text-teal-300 text-sm">Complexo Articular do Ombro</h3>
+                    <p class="text-slate-300 leading-relaxed mt-1">Formado por 5 articulações. Manguito rotador (S.I.T.E): Supraespinal, Infraespinal, Redondo Menor e Subescapular.</p>
+                    <div class="p-2 bg-teal-950/60 rounded-xl border border-teal-500/30 text-teal-200 mt-2">
+                        <b>Ritmo Escapulotorácico:</b> Proporção 2:1 (a cada 3° elevação, 2° glenoumeral e 1° escapulotorácica).
+                    </div>
+                `,
+                joelho: `
+                    <h3 class="font-bold text-teal-300 text-sm">Articulação do Joelho</h3>
+                    <p class="text-slate-300 leading-relaxed mt-1">Trocleogínclimo funcional. Estabilizadores estáticos: LCA, LCP, LCM, LCL e meniscos.</p>
+                `,
+                coluna: `
+                    <h3 class="font-bold text-teal-300 text-sm">Coluna Vertebral</h3>
+                    <p class="text-slate-300 leading-relaxed mt-1">33 vértebras. Curvaturas fisiológicas: Lordose cervical/lumbar e Cifose torácica/sacral.</p>
+                `,
+                neuro: `
+                    <h3 class="font-bold text-teal-300 text-sm">Miótomos Principais</h3>
+                    <ul class="list-disc pl-4 text-slate-300 space-y-1 mt-1">
+                        <li>C5: Flexão de cotovelo</li>
+                        <li>C6: Extensão de punho</li>
+                        <li>L4: Dorsiflexão de tornozelo</li>
+                        <li>S1: Flexão plantar</li>
+                    </ul>
+                `,
+                cardio: `
+                    <h3 class="font-bold text-teal-300 text-sm">Fisioterapia Cardiorrespiratória</h3>
+                    <p class="text-slate-300 leading-relaxed mt-1">Inspiração é processo ativo via contração do diafragma. Volumes: VC, VRI, VRE, VR.</p>
+                `
+            };
+
+            body.innerHTML = topics[topic] || topics['ombro'];
+        };
+
+        AndroidOS.filterTests = function() {
+            const q = (document.getElementById('test-search')?.value || '').toLowerCase();
+            const container = document.getElementById('tests-list');
+            if (!container) return;
+
+            const list = [
+                { name: 'Teste de Lachman', target: 'LCA (Joelho)', desc: 'Translação anterior da tíbia com joelho em 20-30°.' },
+                { name: 'Sinal de Phalen', target: 'Nervo Mediano', desc: 'Flexão máxima de punhos dorsos juntos por 60s.' },
+                { name: 'Teste de Neer', target: 'Impacto Subacromial', desc: 'Elevação passiva em rotação interna.' }
+            ];
+
+            container.innerHTML = '';
+            list.filter(t => t.name.toLowerCase().includes(q) || t.target.toLowerCase().includes(q)).forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'p-3 bg-slate-900 rounded-2xl border border-white/10 space-y-1';
+                card.innerHTML = `
+                    <div class="font-bold text-blue-300">${t.name}</div>
+                    <div class="text-[11px] font-semibold text-slate-300">Alvo: ${t.target}</div>
+                    <div class="text-[10px] text-slate-400">${t.desc}</div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        AndroidOS.checkQuizAnswer = function(btn, isCorrect) {
+            const res = document.getElementById('quiz-result');
+            res.classList.remove('hidden');
+            if (isCorrect) {
+                res.className = 'p-3 rounded-2xl text-xs bg-emerald-950 border border-emerald-500 text-emerald-200';
+                res.innerText = 'Correto! 🎉 O teste de Lachman e gaveta anterior confirmam lesão do LCA.';
+                this.playBeep(800);
+            } else {
+                res.className = 'p-3 rounded-2xl text-xs bg-rose-950 border border-rose-500 text-rose-200';
+                res.innerText = 'Incorreto. Analise os testes de translação anterior de tíbia.';
+                this.playBeep(250);
+            }
+        };
+
+        AndroidOS.updateElectroWave = function() {
+            const canvas = document.getElementById('electro-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const midY = canvas.height / 2;
+            for (let x = 0; x < canvas.width; x++) {
+                let y = midY + Math.sin(x * 0.15) * 25;
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        };
+
+        AndroidOS.calculateKarvonen = function() {
+            const age = parseFloat(document.getElementById('calc-age')?.value) || 0;
+            const rest = parseFloat(document.getElementById('calc-rest')?.value) || 0;
+            const fcMax = 220 - age;
+            const target = Math.round(((fcMax - rest) * 0.6) + rest);
+
+            document.getElementById('calc-result').innerText = `FC Treino (60%): ${target} bpm (FCMáx: ${fcMax})`;
+        };
+
+        AndroidOS.insertSOAP = function() {
+            document.getElementById('soap-editor').value = `[S] SUBJETIVO: Queixa principal...
+[O] OBJETIVO: ADM, Força, Testes...
+[A] AVALIAÇÃO: Diagnóstico cinesiológico...
+[P] PLANO: Conduta fisioterapêutica...`;
+        };
+
+        AndroidOS.saveNotes = function() {
+            const val = document.getElementById('soap-editor')?.value;
+            localStorage.setItem('rhuther_android_notes', val);
+            this.showToast("SOAP", "Anotações salvas com sucesso!");
+        };
+
+        // Pomodoro logic
+        AndroidOS.pomoTime = 1500;
+        AndroidOS.pomoTimer = null;
+
+        AndroidOS.startPomo = function() {
+            if (this.pomoTimer) return;
+            this.pomoTimer = setInterval(() => {
+                if (this.pomoTime > 0) {
+                    this.pomoTime--;
+                    const m = String(Math.floor(this.pomoTime / 60)).padStart(2, '0');
+                    const s = String(this.pomoTime % 60).padStart(2, '0');
+                    document.getElementById('pomo-clock').innerText = `${m}:${s}`;
+                } else {
+                    clearInterval(this.pomoTimer);
+                    this.pomoTimer = null;
+                    this.showToast("Pomodoro", "Tempo de estudo concluído!");
+                }
+            }, 1000);
+        };
+
+        AndroidOS.resetPomo = function() {
+            clearInterval(this.pomoTimer);
+            this.pomoTimer = null;
+            this.pomoTime = 1500;
+            document.getElementById('pomo-clock').innerText = '25:00';
+        };
+
+        AndroidOS.execCmd = function(cmd) {
+            const out = document.getElementById('term-out');
+            const input = document.getElementById('term-in');
+            if (!out || !input) return;
+
+            const trimmed = cmd.trim().toLowerCase();
+            input.value = '';
+
+            const line = document.createElement('div');
+            line.innerHTML = `<span class="text-teal-500">$</span> ${trimmed}`;
+            out.appendChild(line);
+
+            let res = '';
+            if (trimmed === 'ajuda') res = 'Comandos: ajuda, sobre, manguito, limpar';
+            else if (trimmed === 'sobre') res = 'RHUTHER OS Android Edition v1.0';
+            else if (trimmed === 'manguito') res = 'Supraespinal, Infraespinal, Redondo Menor, Subescapular.';
+            else if (trimmed === 'limpar') { out.innerHTML = ''; return; }
+            else res = `Comando '${trimmed}' desconhecido.`;
+
+            const resLine = document.createElement('div');
+            resLine.className = 'text-slate-300 pl-2';
+            resLine.innerText = res;
+            out.appendChild(resLine);
+        };
+
+
+        // ============================================================
+        // ESTUDO ANATOMIA - 12 CAPITULOS ESTRUTURADOS COM TRAVA + CONTEUDO COMPLETO
+        // Cada capitulo: materia completa explicando o assunto + atividade na mesma aba
+        // Conteudo baseado em apostilas de fisioterapia (Portal IDEA, UVA, etc)
+        // ============================================================
+        const EstudoAnatomia = {
+            STORAGE_KEY: 'rhuther_anatomia_v3',
+            capituloAtual: 0,
+            progresso: {},
+            capitulos: [
+                { id:1, titulo:'Osteologia Geral', icon:'bone', cor:'from-slate-600 to-slate-800', img:'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=600&q=80',
+                  objetivo:'Compreender classificação, estrutura e funções dos ossos para base de palpação e raciocínio clínico.',
+                  conteudo:`
+                    <div class="space-y-3 text-[13px] leading-relaxed">
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-teal-300 text-xs mb-1">O QUE ESTUDA?</div>
+                        <p class="text-slate-200">Osteologia é o estudo dos ossos (206 no adulto). Na fisioterapia, é o mapa: onde o músculo origina/insere, onde o ligamento estabiliza e onde palpar com segurança.</p>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-amber-300 text-xs mb-1">CLASSIFICAÇÃO (forma)</div>
+                        <ul class="list-disc pl-5 space-y-1 text-slate-200">
+                          <li><b>Longo:</b> comprimento > largura (fêmur, úmero) — alavanca.</li>
+                          <li><b>Curto:</b> cuboide (carpo/tarso) — estabilidade.</li>
+                          <li><b>Plano:</b> proteção (escápula, crânio).</li>
+                          <li><b>Irregular:</b> vértebra — forma complexa.</li>
+                          <li><b>Sesamoide:</b> dentro de tendão (patela) — melhora braço de alavanca.</li>
+                        </ul>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-emerald-300 text-xs mb-1">ESTRUTURA</div>
+                        <p class="text-slate-200">Diáfise (corpo), epífises (extremidades), metáfise (placa de crescimento), periósteo (membrana vascular que nutre e repara), endósteo e medula (vermelha hematopoiese / amarela gordura).</p>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-violet-950/40 border border-violet-500/30">
+                        <div class="font-black text-violet-300 text-xs mb-1">RELEVÂNCIA CLÍNICA</div>
+                        <p class="text-slate-200">Fratura de Colles = rádio distal em queda com mão espalmada. Tuberosidade tibial = inserção do tendão patelar (Osgood-Schlatter em adolescentes). Entender isso guia palpação sem causar dor.</p>
+                      </div>
+                    </div>
+                  `,
+                  topicos:['Classificação: longo, curto, plano, irregular, sesamoide','Funções: sustentação, proteção, hematopoiese, mineral','Estrutura: diáfise, epífise, periósteo, medula','Marcos: tubérculo, trocânter, côndilo, maléolo'],
+                  questoes:[
+                    {q:'Qual osso é classificado como sesamoide?', opts:['Patela','Fêmur','Escápula','Vértebra'], c:0, exp:'Patela é sesamoide — dentro do tendão do quadríceps, melhora alavanca.'},
+                    {q:'Periósteo tem função principal de:', opts:['Produzir sinóvia','Nutrir e reparar o osso','Filtrar sangue','Armazenar cálcio apenas'], c:1, exp:'Periósteo é vascular, nutre e permite reparo.'},
+                    {q:'O maléolo lateral pertence a qual osso?', opts:['Tíbia','Fíbula','Tálus','Calcâneo'], c:1, exp:'Fíbula = lateral, tíbia = medial.'},
+                    {q:'Osso longo típico possui:', opts:['Diáfise e duas epífises','Apenas diáfise','Apenas epífise','Corpo esponjoso apenas'], c:0, exp:'Diáfise + epífises proximal e distal.'}
+                ]},
+                { id:2, titulo:'Artrologia & Classificação', icon:'link', cor:'from-teal-600 to-cyan-700', img:'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80',
+                  objetivo:'Classificar articulações e entender graus de liberdade para avaliar ADM e estabilidade.',
+                  conteudo:`
+                    <div class="space-y-3 text-[13px] leading-relaxed">
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-teal-300 text-xs mb-1">3 GRANDES GRUPOS</div>
+                        <ul class="list-disc pl-5 space-y-1 text-slate-200">
+                          <li><b>Fibrosa:</b> sem movimento (sutura do crânio, sindesmose tíbio-fibular, gonfose dente-alvéolo).</li>
+                          <li><b>Cartilagínea:</b> pouca mobilidade (sincondrose = hialina, sínfise púbica = fibrocartilagem).</li>
+                          <li><b>Sinovial:</b> livre movimento, tem cápsula + sinóvia + cartilagem hialina. 6 tipos.</li>
+                        </ul>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-amber-300 text-xs mb-1">6 TIPOS SINOVIAIS</div>
+                        <p class="text-slate-200"><b>Plana</b> (carpo), <b>Gínglimo</b> (cotovelo, joelho), <b>Trocoide</b> (atlantoaxial), <b>Elipsoide</b> (punho), <b>Selar</b> (trapézio-metacarpo polegar), <b>Esferoide</b> (ombro, quadril) — triaxial, 3 eixos.</p>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-violet-950/40 border border-violet-500/30">
+                        <div class="font-black text-violet-300 text-xs mb-1">ESTABILIDADE</div>
+                        <p class="text-slate-200">Forma óssea + ligamentos + cápsula + tônus muscular. Joelho: LCA/LCP intra-articulares, colaterais extra, meniscos amortecem. Ombro: lábio glenoidal + manguito = estabilidade dinâmica.</p>
+                      </div>
+                    </div>
+                  `,
+                  topicos:['Fibrosa: sutura, sindesmose, gonfose','Cartilagínea: sincondrose e sínfise','Sinovial: 6 tipos — plana, gínglimo, trocoide, elipsoide, selar, esferoide','Estabilidade: forma óssea, ligamentos, cápsula, músculos'],
+                  questoes:[
+                    {q:'Articulação esferoide (glenoumeral) possui quantos eixos?', opts:['1 eixo','2 eixos','3 eixos (triaxial)','0 eixo'], c:2, exp:'Triaxial: flex/ext, abd/add, rot.'},
+                    {q:'Sutura é exemplo de articulação:', opts:['Sinovial','Fibrosa','Cartilagínea','Sincondrose'], c:1, exp:'Sutura = fibrosa, crânio.'},
+                    {q:'Qual NÃO é sinovial?', opts:['Joelho','Ombro','Sínfise púbica','Cotovelo'], c:2, exp:'Sínfise púbica é cartilagínea.'},
+                    {q:'Ligamento cruzado anterior está em qual articulação?', opts:['Quadril','Joelho','Tornozelo','Punho'], c:1, exp:'LCA intra-articular do joelho.'}
+                ]},
+                { id:3, titulo:'Miologia - Membros Superiores', icon:'armchair', cor:'from-blue-600 to-indigo-700', img:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',
+                  objetivo:'Dominar origem/inserção/ação dos principais músculos do ombro e braço e do manguito rotador.',
+                  conteudo:`
+                    <div class="space-y-3 text-[13px] leading-relaxed">
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-blue-300 text-xs mb-1">MANGUITO ROTADOR (S.I.T.E)</div>
+                        <p class="text-slate-200"><b>S</b>upraespinal (0-15° abdução, inicia), <b>I</b>nfraespinal + <b>R</b>edondo menor (rotação lateral), <b>S</b>ubescapular (rotação medial). Centram a cabeça umeral na glenoide. Lesão = dor noturna + arco doloroso.</p>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-amber-300 text-xs mb-1">DELTÓIDE E BÍCEPS/TRÍCEPS</div>
+                        <p class="text-slate-200">Deltóide 3 porções, principal abdutor 15-90° (axilar C5-C6). Bíceps braquial = flexor cotovelo + supinador forte (musculocutâneo). Tríceps = extensor cotovelo, 3 cabeças (radial).</p>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-violet-950/40 border border-violet-500/30">
+                        <div class="font-black text-violet-300 text-xs mb-1">DICA DE PROVA</div>
+                        <p class="text-slate-200">Jobe/Empty Can testa supraespinal; Gerber (lift-off) testa subescapular; infra + redondo menor = rotação lateral contra resistência.</p>
+                      </div>
+                    </div>
+                  `,
+                  topicos:['Manguito: Supraespinal, Infraespinal, Redondo Menor, Subescapular','Deltóide: 3 porções, abdutor principal','Bíceps braquial: flexor de cotovelo + supinador','Tríceps: extensor de cotovelo, 3 cabeças'],
+                  questoes:[
+                    {q:'Manguito rotador NÃO inclui:', opts:['Supraespinal','Infraespinal','Bíceps braquial','Subescapular'], c:2, exp:'Bíceps não é manguito. Manguito = S.I.T.E.'},
+                    {q:'Supraespinal inicia abdução de 0-15°, depois quem assume?', opts:['Deltóide','Peitoral maior','Latíssimo','Coracobraquial'], c:0, exp:'Deltóide 15-90°.'},
+                    {q:'Redondo menor faz:', opts:['Rotação medial','Rotação lateral','Flexão','Adução pura'], c:1, exp:'Infra + redondo menor = rotadores laterais.'},
+                    {q:'Inervação do deltóide:', opts:['Radial','Axilar','Musculocutâneo','Ulnar'], c:1, exp:'Axilar C5-C6.'}
+                ]},
+                { id:4, titulo:'Miologia - Membros Inferiores', icon:'footprints', cor:'from-emerald-600 to-teal-700', img:'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=600&q=80',
+                  objetivo:'Entender quadríceps, isquiotibiais, glúteos e sural para marcha, agachamento e prevenção de lesão.',
+                  conteudo:`
+                    <div class="space-y-3 text-[13px] leading-relaxed">
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-emerald-300 text-xs mb-1">QUADRÍCEPS vs ISQUIOTIBIAIS</div>
+                        <p class="text-slate-200"><b>Quadríceps:</b> reto femoral + vasto lateral/medial/intermédio → extensão joelho (femoral). <b>Isquiotibiais:</b> semitendíneo, semimembranáceo, bíceps femoral → flexão joelho + extensão quadril (ciático). Antagonistas no joelho.</p>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-amber-300 text-xs mb-1">GLÚTEOS E SURAL</div>
+                        <p class="text-slate-200">Glúteo máximo (extensor quadril), médio/mínimo (abdutores, estabilizam pelve — fraqueza = Trendelenburg). Tríceps sural: gastrocnêmio (biarticular) + sóleo (monoarticular) → flexão plantar (tibial).</p>
+                      </div>
+                    </div>
+                  `,
+                  topicos:['Quadríceps: 4 cabeças, extensor de joelho','Isquiotibiais: flexores de joelho + extensores quadril','Glúteo máximo/médio: extensão e abdução','Tríceps sural: gastrocnêmio + sóleo, flexão plantar'],
+                  questoes:[
+                    {q:'Quadríceps NÃO inclui:', opts:['Reto femoral','Vasto lateral','Sartório','Vasto medial'], c:2, exp:'Sartório não é quadríceps.'},
+                    {q:'Glúteo médio fraco causa:', opts:['Trendelenburg','Babinski','Lasegue +','Winging'], c:0, exp:'Queda da pelve contralateral.'},
+                    {q:'Isquiotibiais fazem:', opts:['Extensão de joelho','Flexão de joelho + extensão de quadril','Apenas rotação','Abdução'], c:1, exp:'Biarticulares.'},
+                    {q:'Sóleo é:', opts:['Biarticular','Monoarticular (só tornozelo)','Não faz flexão plantar','Flexor de joelho'], c:1, exp:'Só cruza tornozelo.'}
+                ]},
+                { id:5, titulo:'Coluna Vertebral', icon:'align-vertical-justify-center', cor:'from-amber-600 to-orange-700', img:'https://images.unsplash.com/photo-1594381898411-846e7d193883?w=600&q=80',
+                  objetivo:'Entender curvas, discos e estabilização para lombalgia e hérnia.',
+                  conteudo:`
+                    <div class="space-y-3 text-[13px] leading-relaxed">
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-amber-300 text-xs mb-1">33 VÉRTEBRAS E CURVAS</div>
+                        <p class="text-slate-200">7C, 12T, 5L, 5S fundidas, 4 coccígeas. Curvas fisiológicas: lordose cervical/lombar (concavidade posterior) e cifose torácica/sacral. Alteração = hiperlordose, hipercifose, escoliose.</p>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-emerald-300 text-xs mb-1">DISCO INTERVERTEBRAL</div>
+                        <p class="text-slate-200">Núcleo pulposo (gel, hidratação) + ânulo fibroso (fibras). Hérnia = protrusão do núcleo, mais comum L4-L5/L5-S1 por carga. Ligamentos: longitudinal anterior/posterior, amarelo.</p>
+                      </div>
+                    </div>
+                  `,
+                  topicos:['Curvas: lordose cervical/lombar, cifose torácica/sacral','Disco: núcleo pulposo + ânulo fibroso','Ligamentos: longitudinal anterior/posterior, amarelo','Músculos profundos: multífidos, transverso do abdome'],
+                  questoes:[
+                    {q:'Quantas vértebras cervicais?', opts:['5','7','12','5 fundidas'], c:1, exp:'7C, 12T, 5L.'},
+                    {q:'Hérnia discal mais comum é:', opts:['Cervical','Torácica','Lombar L4-L5/L5-S1','Sacral'], c:2, exp:'L4-L5 e L5-S1.'},
+                    {q:'Lordose é curva:', opts:['Côncava posterior','Convexa posterior','Retilínea','Sempre patológica'], c:0, exp:'Concavidade posterior.'},
+                    {q:'Transverso do abdome é:', opts:['Estabilizador segmentar','Mobilizador global','Sem função','Extensor'], c:0, exp:'Core profundo.'}
+                ]},
+                { id:6, titulo:'Neuroanatomia Funcional', icon:'brain', cor:'from-violet-600 to-purple-700', img:'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&q=80',
+                  objetivo:'Dermátomos, miótomos, tratos e reflexos para avaliação neurológica completa.',
+                  conteudo:`
+                    <div class="space-y-3 text-[13px] leading-relaxed">
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-violet-300 text-xs mb-1">DERMÁTOMOS E MIÓTOMOS</div>
+                        <p class="text-slate-200">C5 ombro lateral, C6 polegar, C7 médio, C8 mínimo. Miótomos: C5 flexão cotovelo, C6 extensão punho, C7 extensão cotovelo, L4 dorsiflexão, S1 flexão plantar. Teste rápido de nível medular.</p>
+                      </div>
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-amber-300 text-xs mb-1">TRATOS E REFLEXOS</div>
+                        <p class="text-slate-200">Corticoespinhal (motor voluntário), espinotalâmico (dor/temp). Reflexos: bicipital C5, braquiorradial C6, tricipital C7, patelar L4, aquileu S1. Areflxia = lesão periférica, hiperreflexia = central.</p>
+                      </div>
+                    </div>
+                  `,
+                  topicos:['Dermátomo C5 ombro, C6 polegar, C7 médio, C8 mínimo','Miótomos: C5 flexão cotovelo, L4 dorsiflexão, S1 flexão plantar','Tratos: corticoespinhal, espinotalâmico','Reflexos: bicipital C5, patelar L4, aquileu S1'],
+                  questoes:[
+                    {q:'Miótomos L4 testa:', opts:['Flexão plantar','Dorsiflexão de tornozelo','Flexão de quadril','Extensão de punho'], c:1, exp:'L4 = tibial anterior.'},
+                    {q:'Dermátomo do polegar:', opts:['C5','C6','C7','C8'], c:1, exp:'C6 polegar.'},
+                    {q:'Reflexo patelar é:', opts:['C5','L4','S1','T12'], c:1, exp:'L3-L4.'},
+                    {q:'Lesão do nervo mediano causa:', opts:['Mão em garra ulnar','Mão em prece','Pé caído','Winging'], c:1, exp:'Mão em prece.'}
+                ]},
+                { id:7, titulo:'Cardiorrespiratório', icon:'heart-pulse', cor:'from-rose-600 to-pink-700', img:'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80',
+                  objetivo:'Mecânica respiratória e fisiologia do esforço para UTI e reabilitação.',
+                  conteudo:`
+                    <div class="space-y-3 text-[13px] leading-relaxed">
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-rose-300 text-xs mb-1">MÚSCULOS E VOLUMES</div>
+                        <p class="text-slate-200">Diafragma (frênico C3-C5 “keep alive”), intercostais, acessórios (ECOM/escalenos na dispneia). VC 500ml, VRI, VRE, VR, CV. Na DPOC: hiperinsuflação, uso de acessórios.</p>
+                      </div>
+                    </div>
+                  `,
+                  topicos:['Músculos: diafragma, intercostais, acessórios','Volumes: VC 500ml, VRI, VRE, VR','Transporte O2: hemoglobina','Resposta ao exercício: débito, FR, VO2'],
+                  questoes:[
+                    {q:'Diafragma é inervado por:', opts:['Vago','Frênico C3-C5','Intercostal','Femoral'], c:1, exp:'C3-C5.'},
+                    {q:'Volume corrente em repouso ~', opts:['50ml','500ml','5000ml','5ml'], c:1, exp:'~500ml.'},
+                    {q:'Músculo acessório da inspiração:', opts:['Reto abdominal','ECOM','Glúteo máximo','Sóleo'], c:1, exp:'ECOM.'},
+                    {q:'SpO2 normal:', opts:['88%','95-100%','70%','80%'], c:1, exp:'>95%.'}
+                ]},
+                { id:8, titulo:'Cinesiologia do Ombro', icon:'move', cor:'from-cyan-600 to-blue-700', img:'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80',
+                  objetivo:'Ritmo escapulotorácico e impacto para reabilitar ombro com precisão.',
+                  conteudo:`
+                    <div class="space-y-3 text-[13px] leading-relaxed">
+                      <div class="p-3 rounded-2xl bg-slate-900 border border-slate-700">
+                        <div class="font-black text-cyan-300 text-xs mb-1">RITMO 2:1</div>
+                        <p class="text-slate-200">A cada 3° elevação, 2° glenoumeral + 1° escapulotorácica. Serrátil anterior + trapézio inferior estabilizam escápula. Falha = discinesia e impacto 70-120°.</p>
+                      </div>
+                    </div>
+                  `,
+                  topicos:['Ritmo 2:1','Espaço subacromial: supra + bursa','Discinesia: winging, tilt','Testes: Neer, Hawkins, Jobe, Gerber'],
+                  questoes:[
+                    {q:'Ritmo escapulotorácico é:', opts:['1:1','2:1','3:1','1:2'], c:1, exp:'2:1.'},
+                    {q:'Teste de Jobe avalia:', opts:['Subescapular','Supraespinal','Infraespinal','Bíceps'], c:1, exp:'Supra.'},
+                    {q:'Impacto ocorre em arco:', opts:['0-30°','70-120°','180°','0°'], c:1, exp:'70-120°.'},
+                    {q:'Winging indica fraqueza de:', opts:['Trapézio sup.','Serrátil anterior','Deltóide','Peitoral'], c:1, exp:'Serrátil.'}
+                ]},
+                { id:9, titulo:'Cinesiologia do Joelho', icon:'activity', cor:'from-indigo-600 to-violet-700', img:'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&q=80',
+                  objetivo:'Cinemática, ligamentos e Q-angle para avaliar joelho.',
+                  conteudo:`<div class="space-y-3 text-[13px] leading-relaxed"><div class="p-3 rounded-2xl bg-slate-900 border border-slate-700"><p class="text-slate-200">Rolamento + deslizamento, screw home nos últimos 20° (rotação externa tibial). LCA anterior, LCP posterior, meniscos amortecem. Q-angle 13-18°.</p></div></div>`,
+                  topicos:['Cinemática: rolamento + deslize, screw home','Estabilizadores: LCA, LCP, colaterais, meniscos','Q-angle: 13-18°','Meniscos: amortecimento + congruência'],
+                  questoes:[
+                    {q:'LCA impede:', opts:['Translação posterior','Translação anterior da tíbia','Abdução','Adução'], c:1, exp:'LCA segura anterior.'},
+                    {q:'Screw home é:', opts:['Flexão pura','Rotação externa terminal na extensão','Abdução','Pronação'], c:1, exp:'20° finais.'},
+                    {q:'Menisco mais lesionado:', opts:['Lateral','Medial','Ambos','Nenhum'], c:1, exp:'Medial.'},
+                    {q:'Q-angle aumentado predispõe:', opts:['Entorse','Dor patelofemoral','Lombalgia','Epicondilite'], c:1, exp:'Vetor lateral patela.'}
+                ]},
+                { id:10, titulo:'Marcha Humana', icon:'footprints', cor:'from-lime-600 to-emerald-700', img:'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&q=80',
+                  objetivo:'Ciclo da marcha para análise clínica em neuro e ortopedia.',
+                  conteudo:`<div class="space-y-3 text-[13px] leading-relaxed"><div class="p-3 rounded-2xl bg-slate-900 border border-slate-700"><p class="text-slate-200">60% apoio, 40% balanço, 8 fases. Apoio médio = glúteo médio estabiliza pelve. Pé caído = marcha escarvante. Cadência ~110 passos/min.</p></div></div>`,
+                  topicos:['Ciclo: 60% apoio, 40% balanço','Apoio: contato inicial, médio, terminal','Balanço: inicial, médio, terminal','Análise: cadência, passo, passada'],
+                  questoes:[
+                    {q:'Fase de apoio é ~', opts:['20%','40%','60%','80%'], c:2, exp:'60%.'},
+                    {q:'Glúteo médio atua em:', opts:['Balanço','Apoio médio','Só salto','Nunca'], c:1, exp:'Apoio médio.'},
+                    {q:'Pé caído causa:', opts:['Anserina','Escarvante/steppage','Festinante','Tesoura'], c:1, exp:'Steppege.'},
+                    {q:'Cadência normal ~', opts:['30','60','110','200'], c:2, exp:'110.'}
+                ]},
+                { id:11, titulo:'Palpação e Anatomia de Superfície', icon:'hand', cor:'from-orange-600 to-amber-700', img:'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&q=80',
+                  objetivo:'Palpar com segurança os principais acidentes ósseos.',
+                  conteudo:`<div class="space-y-3 text-[13px] leading-relaxed"><div class="p-3 rounded-2xl bg-slate-900 border border-slate-700"><p class="text-slate-200">Acrômio, coracoide, sulco bicipital, EIAS/EIPS, crista ilíaca, patela, tuberosidade tibial, maléolos, C7 proeminente.</p></div></div>`,
+                  topicos:['Ombro: acrômio, coracoide, sulco bicipital','Joelho: patela, tuberosidade','Coluna: C7, EIAS/EIPS','Tornozelo: maléolos, 5° metatarso'],
+                  questoes:[
+                    {q:'Processo coracoide é palpável em:', opts:['Ombro anterior','Joelho','Tornozelo','Cotovelo'], c:0, exp:'Anterior ombro.'},
+                    {q:'EIAS significa:', opts:['Espinha ilíaca ântero-superior','Póstero-superior','Eminência','Esterno'], c:0, exp:'Anterior.'},
+                    {q:'C7 é proeminente porque:', opts:['Mais alta','Processo espinhoso longo','Mais larga','Sem corpo'], c:1, exp:'Longo.'},
+                    {q:'Tuberosidade tibial insere:', opts:['LCA','Tendão patelar','Menisco','LCP'], c:1, exp:'Patelar.'}
+                ]},
+                { id:12, titulo:'Biomecânica Aplicada', icon:'scale', cor:'from-zinc-600 to-slate-700', img:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',
+                  objetivo:'Alavancas, torque e cadeia cinética para prescrição de exercício.',
+                  conteudo:`<div class="space-y-3 text-[13px] leading-relaxed"><div class="p-3 rounded-2xl bg-slate-900 border border-slate-700"><p class="text-slate-200">Alavanca 3ª classe = maioria no corpo (força entre eixo e resistência). Torque = F x d. CCF (pé fixo) vs CCA. Sobrecarga progressiva.</p></div></div>`,
+                  topicos:['Alavancas: 1ª, 2ª, 3ª classe','Torque = Força x braço','CCA vs CCF','Sobrecarga progressiva'],
+                  questoes:[
+                    {q:'Bíceps em flexão é alavanca:', opts:['1ª','2ª','3ª','Nenhuma'], c:2, exp:'3ª classe.'},
+                    {q:'CCF para quadríceps é:', opts:['Cadeira extensora','Agachamento','Caneleira','Flexão plantar'], c:1, exp:'Agachamento.'},
+                    {q:'Torque aumenta quando:', opts:['Braço diminui','Braço aumenta','Força diminui','Não muda'], c:1, exp:'F x d.'},
+                    {q:'Maioria das alavancas corporais são:', opts:['1ª','2ª','3ª','4ª'], c:2, exp:'3ª classe.'}
+                ]}
+            ],
+            load(){
+                try{ const s=JSON.parse(localStorage.getItem(this.STORAGE_KEY)||'{}'); this.progresso=s.progresso||{}; this.capituloAtual=s.capituloAtual||0; }catch(e){}
+            },
+            save(){ localStorage.setItem(this.STORAGE_KEY, JSON.stringify({progresso:this.progresso, capituloAtual:this.capituloAtual})); },
+            onOpen(){ this.load(); this.render(); lucide.createIcons(); },
+            render(){
+                const root = document.getElementById('app-body');
+                const total=this.capitulos.length;
+                const concluidos=Object.values(this.progresso).filter(v=>v).length;
+                const pct=Math.round(concluidos/total*100);
+                let html=`
+                <div class="space-y-3">
+                    <div class="bg-gradient-to-r from-teal-600 to-cyan-600 p-[1px] rounded-3xl">
+                        <div class="bg-slate-900 rounded-3xl p-4 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <div class="font-black text-white text-sm">ANATOMIA • ESTUDO COMPLETO</div>
+                                    <div class="text-[11px] font-bold tracking-widest text-teal-300">${total} MATÉRIAS COMPLETAS • MESMA ABA ESTUDO + ATIVIDADE</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-black text-teal-300 text-lg">${pct}%</div>
+                                    <div class="text-[10px] text-slate-400">${concluidos}/${total}</div>
+                                </div>
+                            </div>
+                            <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-teal-400 to-emerald-400 transition-all" style="width:${pct}%"></div></div>
+                            <div class="text-[11px] text-slate-400 leading-relaxed">Cada matéria explica completa o assunto + atividade na <b class="text-teal-300">mesma aba</b>. Toque no capítulo liberado, estude o conteúdo e faça o quiz (3/4 para liberar próximo).</div>
+                        </div>
+                    </div>
+                    <div class="grid gap-3">
+                `;
+                this.capitulos.forEach((cap, idx)=>{
+                    const liberado = idx===0 || this.progresso[idx];
+                    const feito = this.progresso[idx+1];
+                    const atual = idx===this.capituloAtual;
+                    html+=`
+                    <div class="rounded-3xl border-2 overflow-hidden ${feito?'border-emerald-500/50 bg-emerald-950/20':atual?'border-teal-400 bg-slate-900':liberado?'border-slate-700 bg-slate-900':'border-slate-800 bg-slate-900/60 opacity-60'}">
+                        <button onclick="EstudoAnatomia.abrirCapitulo(${idx})" ${!liberado?'disabled':''} class="w-full text-left p-0">
+                            <div class="h-28 relative overflow-hidden">
+                                <img src="${cap.img}" class="w-full h-full object-cover ${!liberado?'grayscale':''}" onerror="this.style.display='none'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent"></div>
+                                <div class="absolute top-3 left-3 flex items-center gap-2">
+                                    <span class="w-7 h-7 rounded-xl ${feito?'bg-emerald-500':atual?'bg-teal-500':'bg-slate-700'} flex items-center justify-center text-white font-black text-xs">${feito?'✓':cap.id}</span>
+                                    <span class="px-2 py-0.5 rounded-full ${feito?'bg-emerald-500 text-white':atual?'bg-teal-500 text-slate-950':'bg-slate-800 text-slate-400'} font-black text-[10px]">${feito?'CONCLUÍDO':atual?'ESTUDANDO':(!liberado?'BLOQUEADO':'LIBERADO')}</span>
+                                </div>
+                                <div class="absolute bottom-3 left-3 right-3">
+                                    <div class="font-black text-white text-[13px] leading-tight">${cap.titulo}</div>
+                                    <div class="text-[11px] text-slate-200 line-clamp-2">${cap.objetivo}</div>
+                                </div>
+                            </div>
+                        </button>
+                        <div id="cap-${idx}" class="hidden p-4 space-y-4 bg-slate-950">
+                            <div class="text-[11px] font-black tracking-widest text-teal-300 flex items-center gap-2"><i data-lucide="graduation-cap" class="w-4 h-4"></i> CONTEÚDO COMPLETO PARA ESTUDO</div>
+                            ${cap.conteudo}
+                            <div class="pt-3 border-t border-slate-800 space-y-2">
+                                <div class="text-[11px] font-black tracking-widest text-amber-300 flex items-center gap-2"><i data-lucide="list-checks" class="w-4 h-4"></i> RESUMO PARA REVISÃO</div>
+                                <ul class="space-y-1.5">
+                                    ${cap.topicos.map(t=>`<li class="flex gap-2 p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-[12px] leading-relaxed text-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-teal-400 mt-2 shrink-0"></span><span>${t}</span></li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="pt-3 border-t border-slate-800">
+                                <div class="font-black text-violet-300 text-xs mb-2 flex items-center gap-2"><i data-lucide="brain-circuit" class="w-4 h-4"></i> ATIVIDADE DO CAPÍTULO — 3/4 PARA LIBERAR PRÓXIMO (MESMA ABA)</div>
+                                <div id="quiz-cap-${idx}" class="space-y-3"></div>
+                                <div id="quiz-result-${idx}" class="hidden p-3 rounded-2xl text-xs"></div>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                html+=`</div><div class="text-center text-[10px] text-slate-500 pb-2">Mesma aba: estude e faça a atividade sem sair • Baseado em PDFs de fisioterapia</div></div>`;
+                root.innerHTML=html;
+                lucide.createIcons();
+                if(this.capitulos[this.capituloAtual]) this.abrirCapitulo(this.capituloAtual);
+            },
+            abrirCapitulo(idx){
+                const liberado = idx===0 || this.progresso[idx];
+                if(!liberado){ AndroidOS.showToast('Bloqueado','Conclua o anterior com 3/4'); return; }
+                this.capituloAtual=idx; this.save();
+                const el=document.getElementById(`cap-${idx}`);
+                if(el) el.classList.toggle('hidden');
+                if(!el.classList.contains('hidden')) this.renderQuiz(idx);
+                lucide.createIcons();
+            },
+            renderQuiz(idx){
+                const cap=this.capitulos[idx];
+                const cont=document.getElementById(`quiz-cap-${idx}`);
+                if(!cont) return;
+                cont.innerHTML=cap.questoes.map((q,i)=>`
+                    <div class="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-2.5" data-q="${i}">
+                        <div class="font-semibold text-slate-100 text-[13px] leading-relaxed">${i+1}. ${q.q}</div>
+                        <div class="grid gap-2">
+                            ${q.opts.map((op,oi)=>`<button onclick="EstudoAnatomia.responder(${idx},${i},${oi})" class="quiz-opt w-full text-left p-3 rounded-xl bg-slate-950 border-2 border-slate-700 hover:border-violet-400 transition flex items-center gap-3 group">
+                                <span class="w-8 h-8 rounded-xl bg-slate-800 group-hover:bg-violet-500 flex items-center justify-center font-black text-xs text-slate-300 group-hover:text-white shrink-0">${String.fromCharCode(65+oi)}</span>
+                                <span class="flex-1 text-[13px] leading-relaxed text-slate-200">${op}</span>
+                            </button>`).join('')}
+                        </div>
+                        <div id="quiz-exp-${idx}-${i}" class="hidden p-2.5 rounded-xl text-xs leading-relaxed"></div>
+                    </div>
+                `).join('') + `<button onclick="EstudoAnatomia.corrigirCapitulo(${idx})" class="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl font-black text-xs mt-2">CORRIGIR E LIBERAR PRÓXIMO</button>`;
+            },
+            respostas:{},
+            responder(capIdx,qIdx,optIdx){
+                const key=`${capIdx}-${qIdx}`;
+                this.respostas[key]=optIdx;
+                const container=document.querySelector(`#quiz-cap-${capIdx} [data-q="${qIdx}"]`);
+                if(!container) return;
+                container.querySelectorAll('.quiz-opt').forEach((b,bi)=>{
+                    b.classList.remove('border-violet-500','bg-violet-950/50');
+                    if(bi===optIdx) b.classList.add('border-violet-500','bg-violet-950/50');
+                });
+            },
+            _lockCorrigir:false,
+            corrigirCapitulo(idx){
+                if(this._lockCorrigir) return; this._lockCorrigir=true; setTimeout(()=>this._lockCorrigir=false,1000);
+                const cap=this.capitulos[idx];
+                let acertos=0;
+                cap.questoes.forEach((q,i)=>{
+                    const key=`${idx}-${i}`;
+                    const resp=this.respostas[key];
+                    const expEl=document.getElementById(`quiz-exp-${idx}-${i}`);
+                    if(resp===undefined){
+                        expEl.className='p-2.5 rounded-xl text-xs bg-amber-950/50 border border-amber-500/30 text-amber-200';
+                        expEl.innerHTML='⚠️ Selecione uma alternativa.';
+                        expEl.classList.remove('hidden');
+                        return;
+                    }
+                    const correta=resp===q.c;
+                    if(correta) acertos++;
+                    expEl.classList.remove('hidden');
+                    expEl.className= correta ? 'p-2.5 rounded-xl text-xs bg-emerald-950/60 border border-emerald-500/30 text-emerald-200' : 'p-2.5 rounded-xl text-xs bg-rose-950/60 border border-rose-500/30 text-rose-200';
+                    expEl.innerHTML= (correta?'✓ Correto! ':'✗ Incorreto. ') + q.exp;
+                });
+                const resEl=document.getElementById(`quiz-result-${idx}`);
+                resEl.classList.remove('hidden');
+                if(acertos>=3){
+                    this.progresso[idx+1]=true;
+                    this.save();
+                    resEl.className='p-3 rounded-2xl text-xs text-center bg-emerald-950 border border-emerald-500 text-emerald-200 font-bold';
+                    resEl.innerHTML=`🎉 ${acertos}/4! Atividade concluída. Próximo liberado!`;
+                    AndroidOS.playBeep(900);
+                    setTimeout(()=> this.render(), 1200);
+                } else {
+                    resEl.className='p-3 rounded-2xl text-xs text-center bg-rose-950 border border-rose-500 text-rose-200';
+                    resEl.innerHTML=`${acertos}/4. Precisa de 3 para avançar. Revise e tente novamente.`;
+                    AndroidOS.playBeep(250);
+                }
+                lucide.createIcons();
+            }
+        };
+        // ============================================================
+        // BANCO DE QUESTOES - 10000 NIVEIS (8 QUESTOES POR NIVEL, SEM REPETICAO)
+        // Cada nivel tem conteudo relacionado, sem mostrar total, sem texto extra em cima
+        // ============================================================
+        const BancoQuestoes = {
+            STORAGE_KEY: 'rhuther_quiz_10k_v5',
+            level: 1,
+            totalNiveis: 10000,
+            materias: ['Anatomia','Cinesiologia','Biomecanica','Fisiologia','Cardiorresp','Neurofuncional','Traumato-Ortopedia','Eletroterapia','Recursos Manuais','Saude Coletiva','Etica/SOAP','Avaliacao'],
+            conteudos: {
+                'Anatomia': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">Ossos, articulacoes e musculos formam a base da avaliacao. Entenda origem, insercao e acao para palpar e testar com precisao.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> Classificacao ossea, tipos articulares, manguito S.I.T.E, dermatomos C5-S1.</div></div>`,
+                'Cinesiologia': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">Planos, eixos e tipos de contracao explicam como o movimento acontece. Diferencie concentrica, excentrica e isometrica.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> Plano sagital/frontal/transverso, cadeia aberta/fechada, alavancas.</div></div>`,
+                'Biomecanica': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">Torque, centro de massa e Q-angle determinam carga articular. Biomecanica guia prescricao segura de exercicios.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> T=Fxd, CCF vs CCA, Q-angle 13-18.</div></div>`,
+                'Fisiologia': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">Debito cardiaco, VO2 e adaptacoes ao exercicio sao base para prescrever intensidade com Karvonen e Borg.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> DC=FCxVS, limiares, frequencia cardiaca alvo.</div></div>`,
+                'Cardiorresp': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">Mecanica respiratoria e higiene bronquica: diafragma, volumes e manobras ELTGOL/decubito.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> Frenico C3-C5, SpO2, ciclo ativo.</div></div>`,
+                'Neurofuncional': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">Dermatomos, miotomos e escalas neurologicas localizam lesao e guiam facilitacao neuromuscular.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> C6 polegar, L4 dorsiflexao, NIHSS, Ashworth.</div></div>`,
+                'Traumato-Ortopedia': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">Testes especiais e fraturas: Lachman, Neer, Phalen, Colles. Entenda mecanismo e indicacao.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> LCA/LCP, impacto 70-120, entorse grau II.</div></div>`,
+                'Eletroterapia': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">TENS, FES, crioterapia e ultrassom: parametros e indicacoes para analgesia e fortalecimento.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> TENS 80-100Hz, FES motor, 1MHz profundo.</div></div>`,
+                'Recursos Manuais': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">Liberacao miofascial, mobilizacao Maitland e bandagem: quando usar grau I-II vs III-IV.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> Deslizamento fascial, oscilacao, estabilizacao.</div></div>`,
+                'Saude Coletiva': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">SUS, principios e niveis de atencao. Universalidade, integralidade e equidade na pratica.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> Primaria/secundaria/terciaria, RAS.</div></div>`,
+                'Etica/SOAP': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">SOAP, CIF e etica: documentacao clara e consentimento. S=Subjetivo, O=Objetivo, A=Avaliacao, P=Plano.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> Prontuario, CIF funcionalidade.</div></div>`,
+                'Avaliacao': `<div class="space-y-2 text-[13px] leading-relaxed"><p class="text-slate-200">Goniometria, Borg e testes funcionais quantificam ADM e esforco para reavaliar conduta.</p><div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300"><b class="text-teal-300">Foco:</b> Goniometro, escala visual, MRC.</div></div>`
+            },
+            templates: {
+                'Anatomia': [
+                    {q:'O osso {a} e classificado como:', opts:['Longo','Curto','Plano','Sesamoide'], c:3, exp:'{a}: dentro de tendao, melhora alavanca.'},
+                    {q:'A articulacao {a} permite movimento:', opts:['Monoaxial','Biaxial','Triaxial','Sem movimento'], c:2, exp:'{a} esferoide/triaxial.'},
+                    {q:'O musculo {a} realiza:', opts:['{b}','Flexao','Extensao','Abducao'], c:0, exp:'Acao de {a}.'},
+                    {q:'O nervo {a} inerva:', opts:['{b}','{c}','{d}','{e}'], c:0, exp:'Trajeto {a}.'},
+                    {q:'Dermatomos {a} avalia:', opts:['{b}','Dor','Forca','ADM'], c:0, exp:'Mapear {a}.'}
+                ],
+                'Cinesiologia': [
+                    {q:'Plano {a} eixo {b}: movimento tipico e:', opts:['Flexao/extensao','Abducao','Rotacao','Todos'], c:0, exp:'Plano {a} eixo {b}.'},
+                    {q:'Contracao {a} o musculo:', opts:['Encurta','Alonga sob tensao','Isometrico','Relaxa'], c:1, exp:'{a} controla carga alongando.'},
+                    {q:'Cadeia {a} exemplo:', opts:['Agachamento','Cadeira extensora','Rosca','Elevacao'], c:0, exp:'CCF vs CCA.'}
+                ],
+                'Biomecanica': [
+                    {q:'Torque =', opts:['F x braco','F + braco','F / braco','F - braco'], c:0, exp:'T=Fxd.'},
+                    {q:'Q-angle normal:', opts:['5','13-18','30','0'], c:1, exp:'13-15H 15-18M.'},
+                    {q:'Centro de massa em pe:', opts:['S2','C7','Cabeca','Pe'], c:0, exp:'S2 anterior.'}
+                ],
+                'Fisiologia': [
+                    {q:'Debito cardiaco =', opts:['FC x VS','FC + VS','VS','FC'], c:0, exp:'DC=FCxVS.'},
+                    {q:'VO2max indica:', opts:['Capacidade aerobica','Forca','Flexibilidade','Equilibrio'], c:0, exp:'Consumo O2 max.'}
+                ],
+                'Cardiorresp': [
+                    {q:'Manobra {a} indica:', opts:['Higiene bronquica','Fortalecimento','Relaxamento','Dor'], c:0, exp:'{a} mobiliza secrecao.'},
+                    {q:'SpO2 88% e:', opts:['Normal','Hipoxemia','Hiperoxia','Sem valor'], c:1, exp:'<90 hipoxemia.'}
+                ],
+                'Neurofuncional': [
+                    {q:'Escala {a} avalia:', opts:['Consciencia','Forca','Dor','ADM'], c:0, exp:'{a} neurologica.'},
+                    {q:'Hemiparesia e:', opts:['Fraqueza metade corpo','Total','MMII','Leve'], c:0, exp:'Hemi=metade.'}
+                ],
+                'Traumato-Ortopedia': [
+                    {q:'Teste {a} avalia:', opts:['LCA','LCP','Menisco','Impacto'], c:0, exp:'{a} especial.'},
+                    {q:'Fratura {a} mecanismo:', opts:['Queda','Tracao','Ambas','Nenhuma'], c:0, exp:'{a}.'}
+                ],
+                'Eletroterapia': [
+                    {q:'{a} parametro:', opts:['80-100Hz','1-4Hz','3MHz','Todos'], c:0, exp:'{a}.'},
+                    {q:'Crioterapia tempo:', opts:['15-20min','1min','60min','2h'], c:0, exp:'15-20min fase aguda.'}
+                ],
+                'Recursos Manuais': [
+                    {q:'Liberacao miofascial objetivo:', opts:['Deslizamento','Aderencia','Dor','Nada'], c:0, exp:'Fascial.'},
+                    {q:'Maitland grau {a}:', opts:['Oscilatorio','Sustentado','Rapido','Nenhum'], c:0, exp:'Grau {a}.'}
+                ],
+                'Saude Coletiva': [
+                    {q:'SUS {a}:', opts:['Universalidade','Equidade','Integralidade','Todos'], c:0, exp:'Principio {a}.'}
+                ],
+                'Etica/SOAP': [
+                    {q:'SOAP S=', opts:['Subjetivo','Objetivo','Avaliacao','Plano'], c:0, exp:'S=Subjetivo.'},
+                    {q:'CIF classifica:', opts:['Funcionalidade','Doenca','Dor','Estrutura'], c:0, exp:'CIF.'}
+                ],
+                'Avaliacao': [
+                    {q:'Goniometro mede:', opts:['ADM','Forca','Dor','Equilibrio'], c:0, exp:'ADM.'},
+                    {q:'Borg mede:', opts:['Esforco','Dor','Forca','Nada'], c:0, exp:'Esforco percebido.'}
+                ]
+            },
+            variantes: { a:['patela','glenoumeral','supraespinal','mediano','C6','sagital','excentrica','fechada','S2','FC','ELTGOL','Glasgow','Lachman','Colles','TENS','grau I','universalidade'], b:['vasto medial','sindesmose','coracobraquial','ulnar','polegar','frontal','isometrica','aberta','C7'], c:['sartorio','sinfise','peitoral','radial','medio','transverso'], d:['fibula','esferoide','subescapular','musculocutaneo','minimo','longitudinal'], e:['calcaneo','ginglimo','infraespinal','axilar','quadril','obliquo'] },
+            getNivelData(lvl){
+                const mat = this.materias[(lvl-1) % this.materias.length];
+                const conteudo = this.conteudos[mat];
+                const tpls = this.templates[mat];
+                let questoes=[];
+                for(let i=0;i<8;i++){
+                    const id = (lvl-1)*8 + i + 1;
+                    const base = tpls[(lvl*3 + i) % tpls.length];
+                    let qtxt = base.q;
+                    let opts = [...base.opts];
+                    let exp = base.exp;
+                    for(let k of ['a','b','c','d','e']){
+                        const arr = this.variantes[k] || ['a'];
+                        const v = arr[(id*7 + k.charCodeAt(0)) % arr.length];
+                        qtxt = qtxt.split('{'+k+'}').join(v);
+                        opts = opts.map(o=> o.split('{'+k+'}').join(v));
+                        exp = exp.split('{'+k+'}').join(v);
+                    }
+                    questoes.push({id, q: qtxt, opts, c: base.c % 4, exp});
+                }
+                return {nivel:lvl, materia:mat, conteudo, questoes};
+            },
+            load(){ try{ const s=JSON.parse(localStorage.getItem(this.STORAGE_KEY)||'{}'); this.level=s.level||1; if(this.level>10000) this.level=1; }catch(e){ this.level=1; } },
+            save(){ localStorage.setItem(this.STORAGE_KEY, JSON.stringify({level:this.level})); },
+            respostas:{}, lock:false,
+            onOpen(){ this.load(); this.render(); lucide.createIcons(); },
+            render(){
+                const root=document.getElementById('app-body');
+                const data=this.getNivelData(this.level);
+                let html=`
+                <div class="space-y-4">
+                    <div class="bg-slate-900 rounded-3xl border border-white/10 p-4 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center text-white font-black text-xs">${data.nivel}</span>
+                            <div>
+                                <div class="font-black text-white text-[13px] leading-tight">${data.materia}</div>
+                                <div class="text-[11px] font-bold tracking-widest text-violet-300">NIVEL ${data.nivel}</div>
+                            </div>
+                        </div>
+                        ${data.conteudo}
+                    </div>
+                    <div id="quiz-nivel" class="space-y-3">
+                        ${data.questoes.map((q,i)=>`
+                            <div class="p-4 rounded-3xl bg-slate-900 border border-slate-800 space-y-3" data-q="${q.id}">
+                                <div class="font-semibold text-slate-100 text-[13px] leading-relaxed">${i+1}. ${q.q}</div>
+                                <div class="grid gap-2">
+                                    ${q.opts.map((op,oi)=>`<button onclick="BancoQuestoes.responder(${q.id},${oi})" class="opt-${q.id} w-full text-left p-3 rounded-xl bg-slate-950 border-2 border-slate-700 hover:border-violet-400 transition flex items-center gap-3 group"><span class="w-8 h-8 rounded-xl bg-slate-800 group-hover:bg-violet-500 flex items-center justify-center font-black text-xs text-slate-300 group-hover:text-white shrink-0">${String.fromCharCode(65+oi)}</span><span class="flex-1 text-[13px] leading-relaxed text-slate-200">${op}</span></button>`).join('')}
+                                </div>
+                                <div id="exp-${q.id}" class="hidden p-3 rounded-xl text-xs leading-relaxed"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button onclick="BancoQuestoes.corrigir()" class="w-full py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl font-black text-sm shadow">CORRIGIR NIVEL</button>
+                    <div id="nivel-result" class="hidden p-4 rounded-2xl text-xs text-center"></div>
+                </div>`;
+                root.innerHTML=html;
+                this.respostas={};
+                lucide.createIcons();
+            },
+            responder(qid, oi){
+                this.respostas[qid]=oi;
+                document.querySelectorAll(`.opt-${qid}`).forEach((b,bi)=>{
+                    b.classList.remove('border-violet-500','bg-violet-950/50');
+                    if(bi===oi) b.classList.add('border-violet-500','bg-violet-950/50');
+                });
+            },
+            corrigir(){
+                if(this.lock) return; this.lock=true; setTimeout(()=>this.lock=false,1200);
+                const data=this.getNivelData(this.level);
+                let ac=0;
+                data.questoes.forEach(q=>{
+                    const r=this.respostas[q.id];
+                    const el=document.getElementById(`exp-${q.id}`);
+                    if(r===undefined){
+                        el.className='p-3 rounded-xl text-xs bg-amber-950/50 border border-amber-500/30 text-amber-200';
+                        el.innerHTML='Selecione uma alternativa.';
+                        el.classList.remove('hidden');
+                        return;
+                    }
+                    const ok=r===q.c;
+                    if(ok) ac++;
+                    el.classList.remove('hidden');
+                    el.className= ok ? 'p-3 rounded-xl text-xs bg-emerald-950/60 border border-emerald-500/30 text-emerald-200' : 'p-3 rounded-xl text-xs bg-rose-950/60 border border-rose-500/30 text-rose-200';
+                    el.innerHTML=(ok?'Correto! ':'Incorreto. ')+q.exp;
+                    document.querySelectorAll(`.opt-${q.id}`).forEach((b,bi)=>{
+                        b.classList.remove('border-emerald-500','border-rose-500');
+                        if(bi===q.c) b.classList.add('border-emerald-500');
+                        else if(bi===r && !ok) b.classList.add('border-rose-500');
+                    });
+                });
+                const res=document.getElementById('nivel-result');
+                res.classList.remove('hidden');
+                if(ac>=6){
+                    res.className='p-4 rounded-2xl text-xs text-center bg-emerald-950 border border-emerald-500 text-emerald-200 font-bold space-y-2';
+                    res.innerHTML=`<div>${ac}/8 acertos!</div><button onclick="BancoQuestoes.proximo()" class="w-full py-3 bg-emerald-600 text-white rounded-2xl font-black text-sm mt-2">PROXIMO NIVEL</button>`;
+                    AndroidOS.playBeep(900);
+                } else {
+                    res.className='p-4 rounded-2xl text-xs text-center bg-rose-950 border border-rose-500 text-rose-200';
+                    res.innerHTML=`${ac}/8. Precisa de 6 para avancar. Revise o conteudo e tente novamente.`;
+                    AndroidOS.playBeep(250);
+                }
+                lucide.createIcons();
+            },
+            proximo(){
+                if(this.level < 10000) this.level++;
+                this.save();
+                this.render();
+                document.getElementById('app-body').scrollTop=0;
+                AndroidOS.showToast('Nivel concluido','Avancando...');
+            }
+        };
+
+        // === AUTH + SESSAO + PAINEL ADM ===
+        const AuthManager = {
+            STORAGE_SESSION: 'rhuther_session_v2',
+            STORAGE_USERS: 'rhuther_usuarios_v2',
+            current: null,
+            isAdmin: false,
+            init(){
+                const saved = localStorage.getItem(this.STORAGE_SESSION);
+                if(saved){
+                    try{ this.current = JSON.parse(saved); this.isAdmin = this.current.login==='matheus'; this.showApp(); this.mostrarNotificacao(); return; }catch(e){}
+                }
+                this.showLogin();
+            },
+            showLogin(){ document.getElementById('login-screen')?.classList.remove('hidden'); document.getElementById('phone-frame')?.classList.add('opacity-20','pointer-events-none'); lucide.createIcons(); },
+            showApp(){ document.getElementById('login-screen')?.classList.add('hidden'); document.getElementById('phone-frame')?.classList.remove('opacity-20','pointer-events-none'); const who=document.getElementById('shade-date'); if(who && this.current) who.innerHTML=`Bem-vindo, ${this.current.nome||this.current.login} <span class="ml-2 px-2 py-0.5 rounded-full bg-teal-500 text-slate-950 text-[10px]">${this.isAdmin?'ADM':'ALUNO'}</span>`; this.atualizarHomeNotificacao(); },
+            getUsuarios(){
+                try{ return JSON.parse(localStorage.getItem(this.STORAGE_USERS)||'[]'); }catch(e){ return []; }
+            },
+            saveUsuarios(arr){
+                localStorage.setItem(this.STORAGE_USERS, JSON.stringify(arr));
+                // sync Firebase se online
+                if(FirebaseRHUTHER.db && FirebaseRHUTHER.user){
+                    arr.forEach(u=>{
+                        FirebaseRHUTHER.db.collection('usuarios').doc(u.login).set({
+                            login:u.login, nome:u.nome, senha:u.senha, notificacao:u.notificacao||'', ativo:u.ativo!==false, atualizadoEm: new Date().toISOString()
+                        }, {merge:true}).catch(()=>{});
+                    });
+                }
+            },
+            async login(){
+                const loginEl=document.getElementById('login-user');
+                const passEl=document.getElementById('login-pass');
+                const errEl=document.getElementById('login-error');
+                const login=(loginEl.value||'').trim().toLowerCase();
+                const senha=(passEl.value||'').trim();
+                errEl.classList.add('hidden');
+                if(!login || !senha){ errEl.textContent='Preencha login e senha.'; errEl.classList.remove('hidden'); return; }
+                // admin fixo
+                if(login==='matheus' && senha==='10282226'){
+                    this.current={login:'matheus', nome:'Matheus (ADM)', role:'admin'};
+                    this.isAdmin=true;
+                    localStorage.setItem(this.STORAGE_SESSION, JSON.stringify(this.current));
+                    this.showApp(); AndroidOS.showToast('Bem-vindo ADM','Painel liberado'); return;
+                }
+                // buscar usuarios locais + Firebase
+                let usuarios=this.getUsuarios();
+                // tenta Firebase
+                if(FirebaseRHUTHER.db){
+                    try{
+                        const snap=await FirebaseRHUTHER.db.collection('usuarios').doc(login).get();
+                        if(snap.exists){
+                            const d=snap.data();
+                            // atualiza local
+                            const idx=usuarios.findIndex(u=>u.login===login);
+                            if(idx>=0) usuarios[idx]=d; else usuarios.push(d);
+                            this.saveUsuarios(usuarios);
+                        }
+                    }catch(e){}
+                }
+                const u=usuarios.find(x=>x.login===login && x.senha===senha);
+                if(!u){ errEl.textContent='Login ou senha inválidos.'; errEl.classList.remove('hidden'); AndroidOS.playBeep(250); return; }
+                if(u.ativo===false){ errEl.textContent='Usuário desativado pelo ADM.'; errEl.classList.remove('hidden'); return; }
+                this.current={login:u.login, nome:u.nome, notificacao:u.notificacao||''};
+                this.isAdmin=false;
+                localStorage.setItem(this.STORAGE_SESSION, JSON.stringify(this.current));
+                this.showApp(); this.mostrarNotificacao(); AndroidOS.showToast('Bem-vindo', u.nome);
+            },
+            logout(){
+                if(!confirm('Sair e pedir login novamente?')) return;
+                localStorage.removeItem(this.STORAGE_SESSION);
+                this.current=null; this.isAdmin=false;
+                document.getElementById('login-user').value=''; document.getElementById('login-pass').value='';
+                this.showLogin();
+            },
+            mostrarNotificacao(){
+                if(this.current && this.current.notificacao){
+                    setTimeout(()=> AndroidOS.showToast('Notificação ADM', this.current.notificacao), 800);
+                } else if(!this.isAdmin){
+                    // buscar notificacao atualizada do storage
+                    const u=this.getUsuarios().find(x=>x.login===this.current?.login);
+                    if(u && u.notificacao) AndroidOS.showToast('Notificação ADM', u.notificacao);
+                }
+            },
+            atualizarHomeNotificacao(){
+                // injeta aviso na home se houver notificacao
+                setTimeout(()=>{
+                    const home=document.getElementById('home-screen');
+                    if(!home || !this.current || this.isAdmin) return;
+                    const u=this.getUsuarios().find(x=>x.login===this.current.login);
+                    if(u && u.notificacao){
+                        const exist=document.getElementById('user-notif-home');
+                        if(exist) exist.remove();
+                        const w=home.querySelector('.space-y-4');
+                        if(w){
+                            const div=document.createElement('div');
+                            div.id='user-notif-home';
+                            div.className='p-3 bg-amber-500/15 border border-amber-500/30 rounded-2xl flex gap-3 items-start';
+                            div.innerHTML=`<div class="p-2 bg-amber-500/20 rounded-xl"><i data-lucide="bell" class="w-4 h-4 text-amber-300"></i></div><div class="flex-1"><div class="font-black text-amber-300 text-xs">Recado do ADM</div><div class="text-slate-200 text-xs mt-1 leading-relaxed">${u.notificacao}</div></div>`;
+                            w.appendChild(div); lucide.createIcons();
+                        }
+                    }
+                },300);
+            }
+        };
+        const AdminPanel = {
+            onOpen(){
+                if(!AuthManager.isAdmin){
+                    document.getElementById('app-body').innerHTML=`<div class="p-10 text-center space-y-3"><div class="w-16 h-16 mx-auto rounded-2xl bg-rose-500/20 flex items-center justify-center"><i data-lucide="shield-alert" class="w-8 h-8 text-rose-400"></i></div><div class="font-black text-white">Acesso restrito</div><div class="text-xs text-slate-400">Só o ADM matheus pode gerenciar usuários.</div></div>`;
+                    lucide.createIcons(); return;
+                }
+                this.render();
+            },
+            render(){
+                if(!AuthManager.isAdmin) return `<div class="p-6 text-center text-slate-400">Sem permissão</div>`;
+                const usuarios=AuthManager.getUsuarios();
+                return `
+                <div class="space-y-4">
+                    <div class="bg-slate-900 rounded-3xl border border-white/10 p-4 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-black text-white text-sm">GERENCIAR USUÁRIOS</div>
+                                <div class="text-[11px] text-slate-400">${usuarios.length} cadastrados • Sessão atual: matheus (ADM)</div>
+                            </div>
+                            <button onclick="AuthManager.logout()" class="px-3 py-1.5 bg-rose-500/20 border border-rose-500/30 text-rose-300 rounded-xl font-bold text-xs">Logoff</button>
+                        </div>
+                        <div class="grid gap-2 bg-slate-950 rounded-2xl p-3 border border-slate-800">
+                            <div class="font-black text-teal-300 text-xs">ADICIONAR USUÁRIO</div>
+                            <input id="adm-nome" placeholder="Nome completo" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-teal-500">
+                            <input id="adm-login" placeholder="Login (sem espaços)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-teal-500">
+                            <input id="adm-senha" placeholder="Senha" type="text" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-teal-500">
+                            <button onclick="AdminPanel.addUser()" class="w-full py-2.5 bg-teal-500 text-slate-950 rounded-xl font-black text-xs">CRIAR USUÁRIO</button>
+                            <div id="adm-add-msg" class="hidden p-2 rounded-xl text-xs"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="font-black text-slate-200 text-xs px-1">USUÁRIOS CADASTRADOS</div>
+                        <div id="adm-lista" class="space-y-2">
+                            ${usuarios.length===0?`<div class="text-center text-slate-500 py-6 text-xs">Nenhum usuário ainda. Crie o primeiro acima.</div>`:usuarios.map(u=>`
+                            <div class="p-3 bg-slate-900 rounded-2xl border border-white/10 space-y-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="font-bold text-white text-xs">${u.nome}</div>
+                                        <div class="text-[11px] text-slate-400">login: <b class="text-teal-300">${u.login}</b> • senha: <span class="font-mono bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">${u.senha}</span> ${u.ativo===false?'<span class="ml-1 px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px]">DESATIVADO</span>':''}</div>
+                                    </div>
+                                    <span class="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400"><i data-lucide="user" class="w-4 h-4"></i></span>
+                                </div>
+                                <div class="grid gap-1.5">
+                                    <input id="notif-${u.login}" placeholder="Deixar notificação no perfil" value="${(u.notificacao||'').replace(/"/g,'&quot;')}" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                                    <div class="grid grid-cols-3 gap-1.5">
+                                        <button onclick="AdminPanel.salvarNotif('${u.login}')" class="py-2 bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-xl font-bold text-[11px]">Notificar</button>
+                                        <button onclick="AdminPanel.editarSenha('${u.login}')" class="py-2 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl font-bold text-[11px]">Senha</button>
+                                        <button onclick="AdminPanel.toggleAtivo('${u.login}')" class="py-2 ${u.ativo===false?'bg-emerald-500/20 border-emerald-500/30 text-emerald-300':'bg-rose-500/20 border-rose-500/30 text-rose-300'} rounded-xl font-bold text-[11px]">${u.ativo===false?'Ativar':'Desativar'}</button>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-1.5">
+                                        <button onclick="AdminPanel.remover('${u.login}')" class="py-2 bg-rose-600 text-white rounded-xl font-bold text-[11px]">Remover</button>
+                                        <button onclick="AdminPanel.limparNotif('${u.login}')" class="py-2 bg-slate-800 border border-slate-700 text-slate-400 rounded-xl font-bold text-[11px]">Limpar recado</button>
+                                    </div>
+                                </div>
+                            </div>`).join('')}
+                        </div>
+                    </div>
+                    <div class="p-3 bg-slate-900 rounded-2xl border border-white/10 text-[11px] leading-relaxed text-slate-400">
+                        <b class="text-white">Como funciona:</b> Login fica salvo no celular (localStorage + Firebase). Usuário só vê login novamente se clicar em Logoff. ADM pode alterar senha a qualquer hora — usuário usa a nova na próxima vez.
+                    </div>
+                </div>`;
+            },
+            addUser(){
+                const nome=document.getElementById('adm-nome').value.trim();
+                const login=document.getElementById('adm-login').value.trim().toLowerCase().replace(/\s/g,'');
+                const senha=document.getElementById('adm-senha').value.trim();
+                const msg=document.getElementById('adm-add-msg');
+                msg.classList.remove('hidden');
+                if(!nome||!login||!senha){ msg.className='p-2 rounded-xl text-xs bg-rose-950/60 border border-rose-500/30 text-rose-200'; msg.textContent='Preencha nome, login e senha.'; return; }
+                if(login==='matheus'){ msg.className='p-2 rounded-xl text-xs bg-rose-950/60 border border-rose-500/30 text-rose-200'; msg.textContent='Login matheus é reservado ao ADM.'; return; }
+                let usuarios=AuthManager.getUsuarios();
+                if(usuarios.find(u=>u.login===login)){ msg.className='p-2 rounded-xl text-xs bg-rose-950/60 border border-rose-500/30 text-rose-200'; msg.textContent='Login já existe.'; return; }
+                usuarios.push({login,nome,senha,notificacao:'',ativo:true, criadoEm:new Date().toISOString()});
+                AuthManager.saveUsuarios(usuarios);
+                msg.className='p-2 rounded-xl text-xs bg-emerald-950/60 border border-emerald-500/30 text-emerald-200'; msg.textContent=`Usuário ${login} criado!`;
+                document.getElementById('adm-nome').value=''; document.getElementById('adm-login').value=''; document.getElementById('adm-senha').value='';
+                setTimeout(()=>{ document.getElementById('app-body').innerHTML=AdminPanel.render(); lucide.createIcons(); },600);
+            },
+            salvarNotif(login){
+                const v=document.getElementById('notif-'+login).value.trim();
+                let usuarios=AuthManager.getUsuarios();
+                const u=usuarios.find(x=>x.login===login);
+                if(u){ u.notificacao=v; AuthManager.saveUsuarios(usuarios); AndroidOS.showToast('Notificação', v?`Recado para ${login} salvo`:'Recado limpo'); }
+            },
+            limparNotif(login){ document.getElementById('notif-'+login).value=''; this.salvarNotif(login); },
+            editarSenha(login){
+                const nova=prompt('Nova senha para '+login+':');
+                if(nova===null) return;
+                const s=nova.trim();
+                if(!s) return;
+                let usuarios=AuthManager.getUsuarios();
+                const u=usuarios.find(x=>x.login===login);
+                if(u){ u.senha=s; AuthManager.saveUsuarios(usuarios); AndroidOS.showToast('Senha','Senha de '+login+' alterada'); document.getElementById('app-body').innerHTML=AdminPanel.render(); lucide.createIcons(); }
+            },
+            toggleAtivo(login){
+                let usuarios=AuthManager.getUsuarios();
+                const u=usuarios.find(x=>x.login===login);
+                if(u){ u.ativo = u.ativo===false ? true : false; AuthManager.saveUsuarios(usuarios); document.getElementById('app-body').innerHTML=AdminPanel.render(); lucide.createIcons(); }
+            },
+            remover(login){
+                if(!confirm('Remover '+login+'?')) return;
+                let usuarios=AuthManager.getUsuarios().filter(x=>x.login!==login);
+                AuthManager.saveUsuarios(usuarios);
+                // Firebase delete
+                if(FirebaseRHUTHER.db) FirebaseRHUTHER.db.collection('usuarios').doc(login).delete().catch(()=>{});
+                document.getElementById('app-body').innerHTML=AdminPanel.render(); lucide.createIcons();
+            }
+        };
+        // === FIREBASE INIT + SYNC (adaptado para celular, offline-first) ===
+        const FirebaseRHUTHER = {
+            config: {
+                apiKey: "AIzaSyAnHVaiO9TBBaaBFybtAllxa19aJep9ar8",
+                authDomain: "fisio-e512c.firebaseapp.com",
+                projectId: "fisio-e512c",
+                storageBucket: "fisio-e512c.firebasestorage.app",
+                messagingSenderId: "172086759308",
+                appId: "1:172086759308:web:743ce5eead603c552fd0a9",
+                measurementId: "G-7VMD5BMB5M"
+            },
+            app: null, db: null, user: null,
+            init(){
+                try {
+                    if(typeof firebase !== 'undefined'){
+                        this.app = firebase.initializeApp(this.config);
+                        this.db = firebase.firestore();
+                        // offline persistence para celular
+                        this.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+                        firebase.auth().onAuthStateChanged(u=>{ this.user=u; if(u) this.syncFromCloud(); });
+                        // login anonimo para celular sem cadastro
+                        firebase.auth().signInAnonymously().catch(()=>{});
+                    }
+                } catch(e){ console.log('Firebase offline', e); }
+            },
+            async syncFromCloud(){
+                if(!this.user || !this.db) return;
+                try{
+                    const doc = await this.db.collection('progress').doc(this.user.uid).get();
+                    if(doc.exists){
+                        const d = doc.data();
+                        if(d.quizLevel) localStorage.setItem('rhuther_quiz_10k_v5', JSON.stringify({level:d.quizLevel}));
+                        if(d.anatomia) localStorage.setItem('rhuther_anatomia_v3', JSON.stringify(d.anatomia));
+                    }
+                }catch(e){}
+            },
+            async saveProgress(){
+                if(!this.user || !this.db) return;
+                try{
+                    const quiz = JSON.parse(localStorage.getItem('rhuther_quiz_10k_v5')||'{}');
+                    const ana = JSON.parse(localStorage.getItem('rhuther_anatomia_v3')||'{}');
+                    await this.db.collection('progress').doc(this.user.uid).set({
+                        quizLevel: quiz.level||1,
+                        anatomia: ana,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        device: navigator.userAgent.slice(0,120)
+                    }, {merge:true});
+                }catch(e){}
+            }
+        };
+        // intercepta save para sincronizar
+        const _origSaveQuiz = BancoQuestoes.save.bind(BancoQuestoes);
+        BancoQuestoes.save = function(){ _origSaveQuiz(); FirebaseRHUTHER.saveProgress(); };
+        const _origSaveAna = EstudoAnatomia.save.bind(EstudoAnatomia);
+        EstudoAnatomia.save = function(){ _origSaveAna(); FirebaseRHUTHER.saveProgress(); };
+
+        window.onload = function() {
+            AndroidOS.init();
+            FirebaseRHUTHER.init();
+            AuthManager.init();
+            // esconder app ADM se nao for admin
+            setTimeout(()=>{ if(!AuthManager.isAdmin){ /* mantém login */ } },200);
+        };
+    </script>
+</body>
+</html>

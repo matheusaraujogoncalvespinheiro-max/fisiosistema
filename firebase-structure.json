@@ -1,0 +1,93 @@
+{
+  "firestore_collections": {
+    "users": {
+      "description": "Perfil do aluno (auth anonimo ou email)",
+      "docId": "uid (firebase auth)",
+      "fields": {
+        "nome": "string - ex: Ana Clara Souza",
+        "email": "string | null",
+        "foto": "string url | null",
+        "createdAt": "timestamp serverTimestamp",
+        "lastAccess": "timestamp",
+        "device": "string - userAgent",
+        "plano": "string - free | premium"
+      }
+    },
+    "progress": {
+      "description": "Progresso sincronizado celular <-> nuvem (offline-first)",
+      "docId": "uid",
+      "fields": {
+        "quizLevel": "number 1..10000 - nivel atual BancoQuestoes",
+        "anatomia": {
+          "progresso": "map<number, boolean> - ex: {'1':true,'2':true}",
+          "capituloAtual": "number 0..11"
+        },
+        "xp": "number (opcional, se reativar)",
+        "updatedAt": "timestamp serverTimestamp",
+        "device": "string"
+      },
+      "example": {
+        "quizLevel": 42,
+        "anatomia": {"progresso": {"1": true, "2": true}, "capituloAtual": 2},
+        "updatedAt": "2026-08-25T00:00:00Z"
+      }
+    },
+    "questoes": {
+      "description": "Opcional: se quiser armazenar as 80.000 questoes no Firestore em vez de gerar local. Cada doc = 1 questao.",
+      "docId": "autoId ou id numerico 1..80000",
+      "fields": {
+        "id": "number 1..80000",
+        "nivel": "number 1..10000",
+        "materia": "string - enum 12 materias",
+        "enunciado": "string",
+        "opts": "array[4] strings",
+        "correta": "number 0..3",
+        "exp": "string explicacao",
+        "dif": "string Fácil|Médio|Difícil"
+      },
+      "indexes": ["materia", "nivel", "dif"]
+    },
+    "niveisQuiz": {
+      "description": "Cache por nivel (8 questoes + conteudo) - alternativa a gerar no cliente",
+      "docId": "nivel como string '1' .. '10000'",
+      "fields": {
+        "nivel": "number",
+        "materia": "string",
+        "conteudo": "string HTML",
+        "questoesIds": "array[8] numbers"
+      }
+    },
+    "anatomiaCapitulos": {
+      "description": "12 capitulos completos (conteudo + questoes fixas)",
+      "docId": "1..12",
+      "fields": {
+        "id": "number",
+        "titulo": "string",
+        "objetivo": "string",
+        "conteudo": "string HTML",
+        "topicos": "array strings",
+        "questoes": "array[4] {q, opts[4], c, exp}"
+      }
+    },
+    "relatorios": {
+      "description": "Historico de tentativas por nivel (analytics)",
+      "docId": "autoId",
+      "fields": {
+        "uid": "string",
+        "nivel": "number",
+        "acertos": "number 0..8",
+        "tentativaEm": "timestamp",
+        "tempoSeg": "number"
+      }
+    }
+  },
+  "realtimeDatabase_alternative": {
+    "users/{uid}": {"nome": "string", "quizLevel": "number"},
+    "progress/{uid}": {"quizLevel": "number", "anatomia": "object"}
+  },
+  "securityRules_firestore": "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /users/{uid} { allow read, write: if request.auth != null && request.auth.uid == uid; }\n    match /progress/{uid} { allow read, write: if request.auth != null && request.auth.uid == uid; }\n    match /questoes/{id} { allow read: if true; allow write: if false; }\n    match /niveisQuiz/{id} { allow read: if true; allow write: if false; }\n    match /anatomiaCapitulos/{id} { allow read: if true; allow write: if false; }\n    match /relatorios/{id} { allow create: if request.auth != null; allow read: if request.auth.uid == resource.data.uid; }\n  }\n}",
+  "indexes": [
+    {"collection": "questoes", "fields": ["materia Asc", "nivel Asc"]},
+    {"collection": "relatorios", "fields": ["uid Asc", "tentativaEm Desc"]}
+  ]
+}

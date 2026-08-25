@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RHUTHER OS - Android Fisioterapia</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        android: {
+                            bg: '#0f172a',
+                            card: '#1e293b',
+                            accent: '#14b8a6',
+                            accentLight: '#2dd4bf',
+                            surface: '#0f172a',
+                            surfaceVariant: '#1e293b',
+                            primaryContainer: '#134e4a',
+                            onPrimaryContainer: '#ccfbf1',
+                            secondaryContainer: '#1e3a8a',
+                            onSecondaryContainer: '#dbeafe'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'Inter', 'system-ui', 'sans-serif']
+                    },
+                    borderRadius: {
+                        '4xl': '2rem',
+                        '5xl': '2.5rem'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Roboto', 'Inter', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Material You Glass & Shadows */
+        .material-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .material-dialog {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        /* Android Animations */
+        .android-app-enter {
+            animation: appSlideUp 0.28s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        .android-app-exit {
+            animation: appSlideDown 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+
+        @keyframes appSlideUp {
+            from { transform: translateY(100%) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes appSlideDown {
+            from { transform: translateY(0) scale(1); opacity: 1; }
+            to { transform: translateY(100%) scale(0.95); opacity: 0; }
+        }
+
+        .shade-enter {
+            animation: shadeDown 0.25s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes shadeDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Custom Scrollbar for Android Lists */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(20, 184, 166, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(20, 184, 166, 0.7);
+        }
+
+        /* Wallpapers */
+        .wp-material-1 {
+            background: radial-gradient(circle at top right, #0d9488 0%, #0f172a 60%, #0284c7 100%);
+        }
+        .wp-material-2 {
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 70%, #090d16 100%);
+        }
+        .wp-material-3 {
+            background: linear-gradient(160deg, #134e4a 0%, #0f172a 50%, #312e81 100%);
+        }
+
+        .wave-canvas {
+            background-color: #09131d;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 flex justify-center items-center select-none" id="android-body">
+
+    <!-- ANDROID DEVICE CONTAINER (Simulates Phone/Tablet Frame or Fullscreen on Mobile) -->
+    <div id="phone-frame" class="relative w-full h-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl h-full sm:h-[95vh] sm:rounded-[40px] sm:border-[8px] sm:border-slate-800 shadow-2xl overflow-hidden flex flex-col wp-material-1 transition-all duration-500">
+        
+        <!-- ANDROID STATUS BAR -->
+        <div id="status-bar" onclick="AndroidOS.toggleShade()" class="w-full h-8 px-5 pt-1.5 flex justify-between items-center text-xs font-semibold tracking-wider text-slate-200 z-50 bg-black/20 backdrop-blur-md cursor-pointer hover:bg-black/30 transition">
+            <div class="flex items-center space-x-2">
+                <span id="android-clock">12:00</span>
+                <i data-lucide="bell" id="status-notif-icon" class="w-3 h-3 text-teal-400 hidden"></i>
+            </div>
+            <div class="flex items-center space-x-2.5">
+                <i data-lucide="wifi" class="w-3.5 h-3.5 text-teal-300"></i>
+                <i data-lucide="signal" class="w-3.5 h-3.5 text-slate-300"></i>
+                <div class="flex items-center space-x-1">
+                    <span class="text-[10px]">98%</span>
+                    <i data-lucide="battery-charging" class="w-4 h-4 text-emerald-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANDROID NOTIFICATION & QUICK SETTINGS SHADE (PULL-DOWN) -->
+        <div id="quick-shade" class="hidden absolute top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-2xl p-5 border-b border-white/10 shadow-2xl shade-enter flex flex-col space-y-4">
+            <div class="flex justify-between items-center text-xs text-slate-400 pt-2">
+                <span id="shade-date" class="font-bold text-slate-200 text-sm">Segunda, 24 de Agosto</span>
+                <button onclick="AndroidOS.toggleShade()" class="p-1 rounded-full bg-slate-800 hover:bg-slate-700">
+                    <i data-lucide="chevron-up" class="w-4 h-4 text-slate-200"></i>
+                </button>
+            </div>
+
+            <!-- Quick Toggles -->
+            <div class="grid grid-cols-4 gap-3 text-center">
+                <button onclick="AndroidOS.toggleToggle('wifi', this)" class="quick-toggle p-3 rounded-2xl bg-teal-500 text-slate-950 flex flex-col items-center justify-center space-y-1 transition active:scale-95">
+                    <i data-lucide="wifi" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Wi-Fi</span>
+                </button>
+                <button onclick="AndroidOS.toggleToggle('bluetooth', this)" class="quick-toggle p-3 rounded-2xl bg-teal-500 text-slate-950 flex flex-col items-center justify-center space-y-1 transition active:scale-95">
+                    <i data-lucide="bluetooth" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Bluetooth</span>
+                </button>
+                <button onclick="AndroidOS.toggleSound()" id="shade-sound-btn" class="quick-toggle p-3 rounded-2xl bg-slate-800 text-teal-300 flex flex-col items-center justify-center space-y-1 transition active:scale-95">
+                    <i data-lucide="volume-2" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Som</span>
+                </button>
+                <button onclick="AndroidOS.toggleToggle('dnd', this)" class="quick-toggle p-3 rounded-2xl bg-slate-800 text-slate-300 flex flex-col items-center justify-center space-y-1 transition active:scale-95">
+                    <i data-lucide="moon" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Não Perturbe</span>
+                </button>
+            </div>
+
+            <!-- Brightness Slider -->
+            <div class="flex items-center space-x-3 bg-slate-800/60 p-2.5 rounded-2xl">
+                <i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+                <input type="range" min="30" max="100" value="100" oninput="AndroidOS.setBrightness(this.value)" class="w-full accent-teal-400 h-1.5 rounded-lg">
+            </div>
+
+            <!-- Notification Cards -->
+            <div class="space-y-2 pt-2">
+                <div class="text-xs font-bold text-teal-400 uppercase tracking-wider">Notificações</div>
+                <div class="p-3 bg-slate-800/80 rounded-2xl border border-white/5 flex items-start space-x-3">
+                    <div class="p-2 bg-teal-500/20 text-teal-300 rounded-xl"><i data-lucide="graduation-cap" class="w-4 h-4"></i></div>
+                    <div class="flex-1 text-xs">
+                        <div class="font-bold text-slate-200">RHUTHER OS Fisioterapia</div>
+                        <div class="text-slate-400 text-[11px] mt-0.5">Bem-vindo ao sistema de estudo Android de Fisioterapia!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANDROID MAIN VIEWPORT (HOME / APP DRAWER / APP SCREENS) -->
+        <div id="android-viewport" class="relative flex-1 overflow-hidden">
+            
+            <!-- HOME SCREEN -->
+            <div id="home-screen" class="w-full h-full p-5 flex flex-col justify-between overflow-y-auto">
+                
+                <!-- TOP WIDGETS -->
+                <div class="space-y-4">
+                    <!-- Material Clock & Weather Widget -->
+                    <div class="p-5 material-card rounded-3xl flex justify-between items-center shadow-lg">
+                        <div>
+                            <div id="widget-time" class="text-4xl font-extrabold tracking-tight text-white">12:00</div>
+                            <div id="widget-date" class="text-xs font-medium text-teal-300 mt-1">Segunda, 24 de Agosto</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex items-center space-x-1 justify-end text-amber-300 font-bold text-sm">
+                                <i data-lucide="sun" class="w-5 h-5"></i>
+                                <span>28°C</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">Palmas - TO</div>
+                        </div>
+                    </div>
+
+                    <!-- RHUTHER Search / Command Bar Widget -->
+                    <div onclick="AndroidOS.openApp('terminal')" class="material-card p-3 rounded-2xl flex items-center space-x-3 cursor-pointer hover:bg-slate-800/80 transition">
+                        <i data-lucide="search" class="w-4 h-4 text-teal-400"></i>
+                        <span class="text-xs text-slate-400 flex-1">Pesquisar anatomia, testes ou comandos...</span>
+                        <i data-lucide="mic" class="w-4 h-4 text-slate-400"></i>
+                    </div>
+
+                    <!-- Daily Physio Flashcard / Study Widget -->
+                    <div onclick="AndroidOS.openApp('quiz')" class="p-4 bg-gradient-to-r from-teal-900/60 to-slate-900/80 rounded-3xl border border-teal-500/30 cursor-pointer hover:border-teal-400 transition shadow-lg">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-bold text-[9px] uppercase tracking-wider">Dica do Dia • Cinesiologia</span>
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-teal-300"></i>
+                        </div>
+                        <div class="font-bold text-xs text-slate-200">Manguito Rotador (S.I.T.E)</div>
+                        <p class="text-[11px] text-slate-300 mt-1 leading-relaxed">Supraespinal, Infraespinal, Redondo Menor e Subescapular atuam na estabilização dinâmica da articulação glenoumeral.</p>
+                    </div>
+                </div>
+
+                <!-- DESKTOP APP ICONS GRID -->
+                <div class="grid grid-cols-4 gap-4 my-auto py-2">
+                    
+                    <button onclick="AndroidOS.openApp('anatomy')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-teal-600/30 border border-teal-400/40 flex items-center justify-center text-teal-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="book-open" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Anatomia</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('tests')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="clipboard-check" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Testes</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('quiz')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-purple-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="brain-circuit" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Quizzes</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('electro')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-600/30 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="zap" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Eletro</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('calc')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-600/30 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="calculator" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Calculadora</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('notes')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-rose-600/30 border border-rose-400/40 flex items-center justify-center text-rose-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="file-text" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">SOAP</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('pomodoro')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-cyan-600/30 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="timer" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Pomodoro</span>
+                    </button>
+
+                    <button onclick="AndroidOS.openApp('settings')" class="flex flex-col items-center group active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-gray-600/30 border border-gray-400/40 flex items-center justify-center text-gray-300 shadow-lg group-hover:scale-105 transition">
+                            <i data-lucide="settings" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[11px] font-medium text-white mt-1.5 drop-shadow leading-tight text-center">Ajustes</span>
+                    </button>
+
+                </div>
+
+                <!-- BOTTOM ANDROID DOCK -->
+                <div class="p-3 material-card rounded-3xl flex justify-around items-center">
+                    <button onclick="AndroidOS.openApp('anatomy')" class="p-2.5 rounded-2xl hover:bg-white/10 active:scale-90 transition text-teal-300">
+                        <i data-lucide="book-open" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="AndroidOS.openApp('tests')" class="p-2.5 rounded-2xl hover:bg-white/10 active:scale-90 transition text-blue-300">
+                        <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="AndroidOS.toggleDrawer()" class="p-3 rounded-2xl bg-teal-500 text-slate-950 active:scale-90 transition shadow-lg">
+                        <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="AndroidOS.openApp('electro')" class="p-2.5 rounded-2xl hover:bg-white/10 active:scale-90 transition text-amber-300">
+                        <i data-lucide="zap" class="w-6 h-6"></i>
+                    </button>
+                    <button onclick="AndroidOS.openApp('notes')" class="p-2.5 rounded-2xl hover:bg-white/10 active:scale-90 transition text-rose-300">
+                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- ANDROID APP DRAWER (FULL APPS MENU) -->
+            <div id="app-drawer" class="hidden absolute inset-0 z-30 bg-slate-950/95 backdrop-blur-2xl p-5 flex flex-col justify-between animate-pop-in">
+                <div>
+                    <div class="relative mb-5">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="drawer-search" oninput="AndroidOS.filterDrawer(this.value)" placeholder="Pesquisar aplicativos no RHUTHER OS..." class="w-full bg-slate-900 border border-slate-700/80 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-teal-500">
+                    </div>
+
+                    <div id="drawer-grid" class="grid grid-cols-4 gap-4 overflow-y-auto max-h-[70vh] pr-1">
+                        <!-- Dynamic items generated -->
+                    </div>
+                </div>
+
+                <div class="flex justify-center pb-2">
+                    <button onclick="AndroidOS.toggleDrawer()" class="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white">
+                        <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ANDROID RECENTS / MULTITASKING SCREEN -->
+            <div id="recents-screen" class="hidden absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-xl p-5 flex flex-col justify-between">
+                <div class="flex justify-between items-center text-xs font-bold text-slate-300 pt-2">
+                    <span>Aplicativos Recentes</span>
+                    <button onclick="AndroidOS.clearAllApps()" class="px-3 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded-xl hover:bg-rose-500/30 transition">Fechar Todos</button>
+                </div>
+
+                <div id="recents-list" class="flex space-x-4 overflow-x-auto my-auto py-6 px-2">
+                    <!-- Dynamic cards for open apps -->
+                </div>
+
+                <div class="text-center text-xs text-slate-500 pb-2">Toque em um app para alternar</div>
+            </div>
+
+            <!-- ACTIVE FULLSCREEN APP WINDOW CONTAINER -->
+            <div id="app-window" class="hidden absolute inset-0 z-20 bg-slate-900 flex flex-col overflow-hidden android-app-enter">
+                
+                <!-- Android Material Top App Bar -->
+                <div id="app-top-bar" class="h-12 bg-slate-950/90 border-b border-white/10 px-4 flex items-center justify-between text-slate-200">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="AndroidOS.goBack()" class="p-1.5 rounded-full hover:bg-white/10 active:scale-90 transition">
+                            <i data-lucide="arrow-left" class="w-5 h-5 text-teal-400"></i>
+                        </button>
+                        <div class="flex items-center space-x-2">
+                            <i id="app-icon" data-lucide="book-open" class="w-4 h-4 text-teal-300"></i>
+                            <span id="app-title" class="font-bold text-xs">Título do App</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="AndroidOS.goHome()" class="p-1.5 rounded-full hover:bg-white/10 active:scale-90 transition text-slate-400">
+                            <i data-lucide="minus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Android App Viewport Content -->
+                <div id="app-body" class="flex-1 overflow-y-auto p-4 bg-slate-950 text-xs text-slate-200">
+                    <!-- App Content Injected Here -->
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ANDROID BOTTOM NAVIGATION BAR (BACK, HOME, RECENTS) -->
+        <div id="nav-bar" class="w-full h-10 bg-slate-950/90 border-t border-white/10 flex justify-around items-center z-50">
+            <!-- Back Button -->
+            <button onclick="AndroidOS.navBack()" class="p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Home Button -->
+            <button onclick="AndroidOS.goHome()" class="p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition">
+                <i data-lucide="circle" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Recents Button -->
+            <button onclick="AndroidOS.toggleRecents()" class="p-2 rounded-xl text-slate-400 hover:text-white active:scale-95 transition">
+                <i data-lucide="square" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast-container" class="fixed top-12 right-4 left-4 sm:left-auto sm:w-80 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- JAVASCRIPT KERNEL ENGINE -->
+    <script>
+        /**
+         * RHUTHER OS - Android Physical Therapy OS Engine
+         */
+        const AndroidOS = {
+            currentApp: null,
+            openApps: [],
+            soundEnabled: true,
+            audioCtx: null,
+
+            init() {
+                this.updateClock();
+                setInterval(() => this.updateClock(), 1000);
+                lucide.createIcons();
+                this.renderDrawerList();
+                this.showToast("RHUTHER OS Android", "Sistema ativado! Pronto para os estudos de fisioterapia.");
+
+                // Audio context initiation on user interaction
+                window.addEventListener('touchstart', () => this.initAudio(), { once: true });
+                window.addEventListener('click', () => this.initAudio(), { once: true });
+            },
+
+            initAudio() {
+                if (!this.audioCtx) {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+
+            playBeep(freq = 500) {
+                if (!this.soundEnabled || !this.audioCtx) return;
+                try {
+                    const osc = this.audioCtx.createOscillator();
+                    const gain = this.audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.04, this.audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.08);
+                    osc.connect(gain);
+                    gain.connect(this.audioCtx.destination);
+                    osc.start();
+                    osc.stop(this.audioCtx.currentTime + 0.08);
+                } catch(e) {}
+            },
+
+            updateClock() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+
+                document.getElementById('android-clock').innerText = timeStr;
+                document.getElementById('widget-time').innerText = timeStr;
+                document.getElementById('widget-date').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+                document.getElementById('shade-date').innerText = dateStr;
+            },
+
+            toggleShade() {
+                const shade = document.getElementById('quick-shade');
+                shade.classList.toggle('hidden');
+                this.playBeep(600);
+            },
+
+            setBrightness(val) {
+                document.getElementById('phone-frame').style.filter = `brightness(${val}%)`;
+            },
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                const btn = document.getElementById('shade-sound-btn');
+                btn.className = `quick-toggle p-3 rounded-2xl flex flex-col items-center justify-center space-y-1 transition active:scale-95 ${this.soundEnabled ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 text-rose-400'}`;
+                this.showToast("Áudio", this.soundEnabled ? "Som ativado" : "Som desativado");
+            },
+
+            toggleToggle(name, btn) {
+                btn.classList.toggle('bg-teal-500');
+                btn.classList.toggle('text-slate-950');
+                btn.classList.toggle('bg-slate-800');
+                btn.classList.toggle('text-slate-300');
+                this.playBeep(700);
+            },
+
+            toggleDrawer() {
+                const drawer = document.getElementById('app-drawer');
+                drawer.classList.toggle('hidden');
+                this.playBeep(550);
+            },
+
+            renderDrawerList() {
+                const grid = document.getElementById('drawer-grid');
+                if (!grid) return;
+                grid.innerHTML = '';
+
+                Object.keys(this.apps).forEach(appId => {
+                    const app = this.apps[appId];
+                    const btn = document.createElement('button');
+                    btn.className = 'flex flex-col items-center group active:scale-90 transition drawer-item';
+                    btn.onclick = () => {
+                        this.toggleDrawer();
+                        this.openApp(appId);
+                    };
+                    btn.innerHTML = `
+                        <div class="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-teal-400 shadow group-hover:scale-105 transition">
+                            <i data-lucide="${app.icon}" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-[10px] font-medium text-slate-300 mt-1.5 leading-tight text-center">${app.title}</span>
+                    `;
+                    grid.appendChild(btn);
+                });
+                lucide.createIcons();
+            },
+
+            filterDrawer(query) {
+                const q = query.toLowerCase();
+                document.querySelectorAll('.drawer-item').forEach(item => {
+                    const text = item.innerText.toLowerCase();
+                    item.style.display = text.includes(q) ? 'flex' : 'none';
+                });
+            },
+
+            openApp(appId) {
+                this.playBeep(650);
+                const appConfig = this.apps[appId];
+                if (!appConfig) return;
+
+                if (!this.openApps.includes(appId)) {
+                    this.openApps.push(appId);
+                }
+
+                this.currentApp = appId;
+
+                // Close overlays
+                document.getElementById('quick-shade').classList.add('hidden');
+                document.getElementById('recents-screen').classList.add('hidden');
+                document.getElementById('app-drawer').classList.add('hidden');
+
+                // Render App Window
+                const win = document.getElementById('app-window');
+                const titleEl = document.getElementById('app-title');
+                const iconEl = document.getElementById('app-icon');
+                const bodyEl = document.getElementById('app-body');
+
+                titleEl.innerText = appConfig.title;
+                iconEl.setAttribute('data-lucide', appConfig.icon);
+                bodyEl.innerHTML = appConfig.render();
+
+                win.classList.remove('hidden');
+                lucide.createIcons();
+
+                if (appConfig.onOpen) {
+                    setTimeout(() => appConfig.onOpen(), 50);
+                }
+            },
+
+            goHome() {
+                this.playBeep(400);
+                document.getElementById('app-window').classList.add('hidden');
+                document.getElementById('recents-screen').classList.add('hidden');
+                document.getElementById('app-drawer').classList.add('hidden');
+                document.getElementById('quick-shade').classList.add('hidden');
+                this.currentApp = null;
+            },
+
+            goBack() {
+                this.goHome();
+            },
+
+            navBack() {
+                if (!document.getElementById('app-window').classList.contains('hidden')) {
+                    this.goHome();
+                } else if (!document.getElementById('recents-screen').classList.contains('hidden')) {
+                    document.getElementById('recents-screen').classList.add('hidden');
+                } else if (!document.getElementById('app-drawer').classList.contains('hidden')) {
+                    document.getElementById('app-drawer').classList.add('hidden');
+                } else if (!document.getElementById('quick-shade').classList.contains('hidden')) {
+                    document.getElementById('quick-shade').classList.add('hidden');
+                } else {
+                    this.playBeep(300);
+                }
+            },
+
+            toggleRecents() {
+                this.playBeep(500);
+                const recents = document.getElementById('recents-screen');
+                const isHidden = recents.classList.contains('hidden');
+
+                if (isHidden) {
+                    this.renderRecentsList();
+                    recents.classList.remove('hidden');
+                    document.getElementById('app-window').classList.add('hidden');
+                    document.getElementById('app-drawer').classList.add('hidden');
+                } else {
+                    recents.classList.add('hidden');
+                }
+            },
+
+            renderRecentsList() {
+                const list = document.getElementById('recents-list');
+                if (!list) return;
+                list.innerHTML = '';
+
+                if (this.openApps.length === 0) {
+                    list.innerHTML = `<div class="text-slate-500 text-xs w-full text-center py-10">Nenhum app recente aberto</div>`;
+                    return;
+                }
+
+                this.openApps.forEach(appId => {
+                    const app = this.apps[appId];
+                    const card = document.createElement('div');
+                    card.className = 'w-48 h-64 bg-slate-900 border border-teal-500/30 rounded-3xl p-3 flex flex-col justify-between shrink-0 shadow-xl cursor-pointer hover:border-teal-400 transition';
+                    card.onclick = () => this.openApp(appId);
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="${app.icon}" class="w-4 h-4 text-teal-300"></i>
+                                <span class="font-bold text-xs text-slate-200 truncate w-24">${app.title}</span>
+                            </div>
+                            <button onclick="event.stopPropagation(); AndroidOS.closeApp('${appId}')" class="p-1 text-slate-400 hover:text-rose-400">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="flex-1 my-2 bg-slate-950/80 rounded-xl p-2 text-[10px] text-slate-400 overflow-hidden opacity-60">
+                            Toque para visualizar
+                        </div>
+                        <div class="text-[9px] text-teal-400 font-semibold text-center">EM EXECUÇÃO</div>
+                    `;
+                    list.appendChild(card);
+                });
+                lucide.createIcons();
+            },
+
+            closeApp(appId) {
+                this.openApps = this.openApps.filter(id => id !== appId);
+                if (this.currentApp === appId) {
+                    this.goHome();
+                }
+                this.renderRecentsList();
+            },
+
+            clearAllApps() {
+                this.openApps = [];
+                this.goHome();
+                this.showToast("Multitarefa", "Todos os aplicativos foram encerrados.");
+            },
+
+            showToast(title, msg) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = 'material-card p-3 rounded-2xl border border-teal-500/40 shadow-2xl text-xs flex items-start space-x-3 pointer-events-auto animate-pop-in';
+                toast.innerHTML = `
+                    <div class="p-1.5 bg-teal-500/20 text-teal-300 rounded-xl"><i data-lucide="bell" class="w-4 h-4"></i></div>
+                    <div class="flex-1">
+                        <div class="font-bold text-teal-200">${title}</div>
+                        <div class="text-slate-300 text-[11px] mt-0.5">${msg}</div>
+                    </div>
+                `;
+                container.appendChild(toast);
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.4s';
+                    setTimeout(() => toast.remove(), 400);
+                }, 3500);
+            },
+
+            setBg(bgClass) {
+                const frame = document.getElementById('phone-frame');
+                frame.className = `relative w-full h-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl h-full sm:h-[95vh] sm:rounded-[40px] sm:border-[8px] sm:border-slate-800 shadow-2xl overflow-hidden flex flex-col ${bgClass} transition-all duration-500`;
+                this.showToast("Aparelho", "Papel de parede atualizado!");
+            }
+        };
+
+        AndroidOS.apps = {
+
+            // APP 1: ANATOMIA E CINESIOLOGIA
+            anatomy: {
+                title: 'Anatomia & Cinesiologia',
+                icon: 'book-open',
+                render: function() {
+                    return `
+                        <div class="space-y-4">
+                            <!-- Category Chips -->
+                            <div class="flex space-x-2 overflow-x-auto pb-1">
+                                <button onclick="AndroidOS.loadAnatomyTopic('ombro')" class="px-3 py-1.5 rounded-full bg-teal-500 text-slate-950 font-bold text-[11px] shrink-0">Ombro</button>
+                                <button onclick="AndroidOS.loadAnatomyTopic('joelho')" class="px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 font-medium text-[11px] shrink-0">Joelho</button>
+                                <button onclick="AndroidOS.loadAnatomyTopic('coluna')" class="px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 font-medium text-[11px] shrink-0">Coluna</button>
+                                <button onclick="AndroidOS.loadAnatomyTopic('neuro')" class="px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 font-medium text-[11px] shrink-0">Miótomos</button>
+                                <button onclick="AndroidOS.loadAnatomyTopic('cardio')" class="px-3 py-1.5 rounded-full bg-slate-800 text-slate-300 font-medium text-[11px] shrink-0">Cardiorrespiratório</button>
+                            </div>
+
+                            <!-- Content Display Card -->
+                            <div id="anatomy-body" class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-3">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    `;
+                },
+                onOpen: function() {
+                    AndroidOS.loadAnatomyTopic('ombro');
+                }
+            },
+
+            // APP 2: TESTES CLINICOS
+            tests: {
+                title: 'Testes Clínicos & Ortopédicos',
+                icon: 'clipboard-check',
+                render: function() {
+                    return `
+                        <div class="space-y-3">
+                            <!-- Search & Filter -->
+                            <input type="text" id="test-search" oninput="AndroidOS.filterTests()" placeholder="Buscar teste (ex: Lachman, Phalen, Neer)..." class="w-full bg-slate-900 border border-slate-700 rounded-2xl px-3 py-2 text-slate-200 focus:outline-none focus:border-teal-500 text-xs">
+                            
+                            <!-- Goniometer Widget -->
+                            <div class="p-3 bg-teal-950/60 border border-teal-500/30 rounded-2xl flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i data-lucide="compass" class="w-5 h-5 text-teal-300"></i>
+                                    <div>
+                                        <div class="font-bold text-teal-200">Goniômetro Virtual</div>
+                                        <div class="text-[10px] text-slate-400">ADM Articular</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <input type="range" min="0" max="180" value="90" oninput="document.getElementById('gonio-degree').innerText = this.value + '°'" class="w-24 accent-teal-400">
+                                    <span id="gonio-degree" class="font-bold text-teal-300 w-8 text-right">90°</span>
+                                </div>
+                            </div>
+
+                            <!-- Test List -->
+                            <div id="tests-list" class="space-y-2">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </div>
+                    `;
+                },
+                onOpen: function() {
+                    AndroidOS.filterTests();
+                }
+            },
+
+            // APP 3: QUIZ & CASOS
+            quiz: {
+                title: 'Quiz & Casos Clínicos',
+                icon: 'brain-circuit',
+                render: function() {
+                    return `
+                        <div class="space-y-4">
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-3">
+                                <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold text-[10px]">CASO CLÍNICO #1</span>
+                                <h4 class="font-bold text-slate-100 text-xs">Entorse de Joelho em Atleta</h4>
+                                <p class="text-slate-300 leading-relaxed">Paciente jovem, 22 anos, futebolista, apresentou trauma torcional com valgo dinâmico. Exame físico: Estalido com gaveta anterior positiva e Lachman Grau III.</p>
+                                
+                                <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+                                    <div class="font-bold text-purple-300">Qual a estrutura lesionada?</div>
+                                    <button onclick="AndroidOS.checkQuizAnswer(this, true)" class="w-full text-left p-2 rounded-xl bg-slate-900 border border-slate-700 hover:border-purple-500 transition">A) Ligamento Cruzado Anterior (LCA)</button>
+                                    <button onclick="AndroidOS.checkQuizAnswer(this, false)" class="w-full text-left p-2 rounded-xl bg-slate-900 border border-slate-700 hover:border-purple-500 transition">B) Tendão Patelar</button>
+                                    <button onclick="AndroidOS.checkQuizAnswer(this, false)" class="w-full text-left p-2 rounded-xl bg-slate-900 border border-slate-700 hover:border-purple-500 transition">C) Menisco Lateral Isolado</button>
+                                </div>
+                                <div id="quiz-result" class="hidden p-3 rounded-2xl text-xs"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+
+            // APP 4: ELETROTERAPIA SIMULATOR
+            electro: {
+                title: 'Simulador de Eletroterapia',
+                icon: 'zap',
+                render: function() {
+                    return `
+                        <div class="space-y-4">
+                            <!-- Canvas Display -->
+                            <div class="h-36 rounded-2xl overflow-hidden border border-amber-500/30 relative">
+                                <canvas id="electro-canvas" class="w-full h-full wave-canvas"></canvas>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-3">
+                                <div>
+                                    <label class="block text-slate-400 mb-1">Modalidade</label>
+                                    <select id="electro-type" onchange="AndroidOS.updateElectroWave()" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-amber-300 font-bold focus:outline-none">
+                                        <option value="tens">TENS Convencional (Analgesia)</option>
+                                        <option value="burst">TENS Burst (Endorfinérgico)</option>
+                                        <option value="fes">FES (Fortalecimento Motor)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between text-slate-300 mb-1">
+                                        <span>Frequência</span>
+                                        <span id="freq-val" class="font-bold text-amber-400">100 Hz</span>
+                                    </div>
+                                    <input type="range" id="freq-range" min="1" max="150" value="100" oninput="AndroidOS.updateElectroWave()" class="w-full accent-amber-500">
+                                </div>
+
+                                <button onclick="AndroidOS.playBeep(900); AndroidOS.showToast('Eletroterapia', 'Pulso elétrico disparado!')" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-slate-950 rounded-2xl shadow transition">Simular Aplicação</button>
+                            </div>
+                        </div>
+                    `;
+                },
+                onOpen: function() {
+                    AndroidOS.updateElectroWave();
+                }
+            },
+
+            // APP 5: CALCULADORA
+            calc: {
+                title: 'Calculadora Fisioterapêutica',
+                icon: 'calculator',
+                render: function() {
+                    return `
+                        <div class="space-y-4">
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-3">
+                                <h4 class="font-bold text-emerald-400 flex items-center">
+                                    <i data-lucide="heart-pulse" class="w-4 h-4 mr-1"></i> Frequência Cardíaca Alvo (Karvonen)
+                                </h4>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-slate-400">Idade</label>
+                                        <input type="number" id="calc-age" value="25" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-slate-200 mt-1">
+                                    </div>
+                                    <div>
+                                        <label class="text-slate-400">FC Repouso</label>
+                                        <input type="number" id="calc-rest" value="70" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-slate-200 mt-1">
+                                    </div>
+                                </div>
+                                <button onclick="AndroidOS.calculateKarvonen()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 font-bold text-white rounded-xl transition">Calcular</button>
+                                <div id="calc-result" class="p-3 bg-emerald-950/50 border border-emerald-500/30 rounded-2xl text-emerald-300 font-bold text-center">
+                                    Resultado: -- bpm
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+
+            // APP 6: BLOCO SOAP
+            notes: {
+                title: 'Anotações & Ficha SOAP',
+                icon: 'file-text',
+                render: function() {
+                    return `
+                        <div class="flex flex-col h-[70vh] space-y-3">
+                            <div class="flex justify-between items-center">
+                                <button onclick="AndroidOS.insertSOAP()" class="px-3 py-1.5 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl font-bold text-[11px]">Inserir SOAP</button>
+                                <button onclick="AndroidOS.saveNotes()" class="px-4 py-1.5 bg-rose-600 font-bold text-white rounded-xl text-[11px]">Salvar</button>
+                            </div>
+                            <textarea id="soap-editor" placeholder="Digite aqui suas anotações fisioterapêuticas..." class="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 text-slate-200 font-mono text-xs focus:outline-none focus:border-rose-500 resize-none leading-relaxed"></textarea>
+                        </div>
+                    `;
+                },
+                onOpen: function() {
+                    const saved = localStorage.getItem('rhuther_android_notes');
+                    if (saved) document.getElementById('soap-editor').value = saved;
+                }
+            },
+
+            // APP 7: POMODORO
+            pomodoro: {
+                title: 'Pomodoro de Estudos',
+                icon: 'timer',
+                render: function() {
+                    return `
+                        <div class="flex flex-col items-center justify-center space-y-6 py-8">
+                            <div class="w-44 h-44 rounded-full border-4 border-cyan-500/40 bg-slate-900 flex items-center justify-center shadow-2xl">
+                                <span id="pomo-clock" class="font-mono text-4xl font-bold text-cyan-300">25:00</span>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button onclick="AndroidOS.startPomo()" class="px-6 py-2 bg-cyan-500 font-bold text-slate-950 rounded-2xl shadow">Iniciar</button>
+                                <button onclick="AndroidOS.resetPomo()" class="px-6 py-2 bg-slate-800 font-bold text-slate-300 rounded-2xl">Resetar</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+
+            // APP 8: TERMINAL CLI
+            terminal: {
+                title: 'Terminal RHUTHER CLI',
+                icon: 'terminal',
+                render: function() {
+                    return `
+                        <div class="h-[65vh] bg-slate-950 font-mono p-3 rounded-2xl border border-teal-500/30 flex flex-col justify-between">
+                            <div id="term-out" class="overflow-y-auto space-y-1 text-teal-400 text-[11px]">
+                                <div>RHUTHER Android Shell v1.0</div>
+                                <div>Digite 'ajuda' para comandos.</div>
+                            </div>
+                            <div class="flex items-center space-x-2 pt-2 border-t border-slate-800">
+                                <span class="text-teal-400 font-bold">$</span>
+                                <input type="text" id="term-in" onkeydown="if(event.key==='Enter') AndroidOS.execCmd(this.value)" class="flex-1 bg-transparent text-teal-200 text-xs focus:outline-none">
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+
+            // APP 9: CONFIGURAÇÕES
+            settings: {
+                title: 'Configurações Android',
+                icon: 'settings',
+                render: function() {
+                    return `
+                        <div class="space-y-4">
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-3">
+                                <h4 class="font-bold text-slate-200">Papel de Parede Material You</h4>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button onclick="AndroidOS.setBg('wp-material-1')" class="h-16 rounded-2xl wp-material-1 border-2 border-white/20"></button>
+                                    <button onclick="AndroidOS.setBg('wp-material-2')" class="h-16 rounded-2xl wp-material-2 border-2 border-white/20"></button>
+                                    <button onclick="AndroidOS.setBg('wp-material-3')" class="h-16 rounded-2xl wp-material-3 border-2 border-white/20"></button>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-1">
+                                <div class="font-bold text-slate-200">Sobre o RHUTHER OS</div>
+                                <div class="text-[11px] text-slate-400">Versão: Android 14 (RHUTHER Physical Therapy Edition)</div>
+                                <div class="text-[11px] text-teal-400 mt-2">Desenvolvido para aprendizagem rápida de Fisioterapia.</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        };
+
+        AndroidOS.loadAnatomyTopic = function(topic) {
+            const body = document.getElementById('anatomy-body');
+            if (!body) return;
+
+            const topics = {
+                ombro: `
+                    <h3 class="font-bold text-teal-300 text-sm">Complexo Articular do Ombro</h3>
+                    <p class="text-slate-300 leading-relaxed mt-1">Formado por 5 articulações. Manguito rotador (S.I.T.E): Supraespinal, Infraespinal, Redondo Menor e Subescapular.</p>
+                    <div class="p-2 bg-teal-950/60 rounded-xl border border-teal-500/30 text-teal-200 mt-2">
+                        <b>Ritmo Escapulotorácico:</b> Proporção 2:1 (a cada 3° elevação, 2° glenoumeral e 1° escapulotorácica).
+                    </div>
+                `,
+                joelho: `
+                    <h3 class="font-bold text-teal-300 text-sm">Articulação do Joelho</h3>
+                    <p class="text-slate-300 leading-relaxed mt-1">Trocleogínclimo funcional. Estabilizadores estáticos: LCA, LCP, LCM, LCL e meniscos.</p>
+                `,
+                coluna: `
+                    <h3 class="font-bold text-teal-300 text-sm">Coluna Vertebral</h3>
+                    <p class="text-slate-300 leading-relaxed mt-1">33 vértebras. Curvaturas fisiológicas: Lordose cervical/lumbar e Cifose torácica/sacral.</p>
+                `,
+                neuro: `
+                    <h3 class="font-bold text-teal-300 text-sm">Miótomos Principais</h3>
+                    <ul class="list-disc pl-4 text-slate-300 space-y-1 mt-1">
+                        <li>C5: Flexão de cotovelo</li>
+                        <li>C6: Extensão de punho</li>
+                        <li>L4: Dorsiflexão de tornozelo</li>
+                        <li>S1: Flexão plantar</li>
+                    </ul>
+                `,
+                cardio: `
+                    <h3 class="font-bold text-teal-300 text-sm">Fisioterapia Cardiorrespiratória</h3>
+                    <p class="text-slate-300 leading-relaxed mt-1">Inspiração é processo ativo via contração do diafragma. Volumes: VC, VRI, VRE, VR.</p>
+                `
+            };
+
+            body.innerHTML = topics[topic] || topics['ombro'];
+        };
+
+        AndroidOS.filterTests = function() {
+            const q = (document.getElementById('test-search')?.value || '').toLowerCase();
+            const container = document.getElementById('tests-list');
+            if (!container) return;
+
+            const list = [
+                { name: 'Teste de Lachman', target: 'LCA (Joelho)', desc: 'Translação anterior da tíbia com joelho em 20-30°.' },
+                { name: 'Sinal de Phalen', target: 'Nervo Mediano', desc: 'Flexão máxima de punhos dorsos juntos por 60s.' },
+                { name: 'Teste de Neer', target: 'Impacto Subacromial', desc: 'Elevação passiva em rotação interna.' }
+            ];
+
+            container.innerHTML = '';
+            list.filter(t => t.name.toLowerCase().includes(q) || t.target.toLowerCase().includes(q)).forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'p-3 bg-slate-900 rounded-2xl border border-white/10 space-y-1';
+                card.innerHTML = `
+                    <div class="font-bold text-blue-300">${t.name}</div>
+                    <div class="text-[11px] font-semibold text-slate-300">Alvo: ${t.target}</div>
+                    <div class="text-[10px] text-slate-400">${t.desc}</div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        AndroidOS.checkQuizAnswer = function(btn, isCorrect) {
+            const res = document.getElementById('quiz-result');
+            res.classList.remove('hidden');
+            if (isCorrect) {
+                res.className = 'p-3 rounded-2xl text-xs bg-emerald-950 border border-emerald-500 text-emerald-200';
+                res.innerText = 'Correto! 🎉 O teste de Lachman e gaveta anterior confirmam lesão do LCA.';
+                this.playBeep(800);
+            } else {
+                res.className = 'p-3 rounded-2xl text-xs bg-rose-950 border border-rose-500 text-rose-200';
+                res.innerText = 'Incorreto. Analise os testes de translação anterior de tíbia.';
+                this.playBeep(250);
+            }
+        };
+
+        AndroidOS.updateElectroWave = function() {
+            const canvas = document.getElementById('electro-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const midY = canvas.height / 2;
+            for (let x = 0; x < canvas.width; x++) {
+                let y = midY + Math.sin(x * 0.15) * 25;
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        };
+
+        AndroidOS.calculateKarvonen = function() {
+            const age = parseFloat(document.getElementById('calc-age')?.value) || 0;
+            const rest = parseFloat(document.getElementById('calc-rest')?.value) || 0;
+            const fcMax = 220 - age;
+            const target = Math.round(((fcMax - rest) * 0.6) + rest);
+
+            document.getElementById('calc-result').innerText = `FC Treino (60%): ${target} bpm (FCMáx: ${fcMax})`;
+        };
+
+        AndroidOS.insertSOAP = function() {
+            document.getElementById('soap-editor').value = `[S] SUBJETIVO: Queixa principal...
+[O] OBJETIVO: ADM, Força, Testes...
+[A] AVALIAÇÃO: Diagnóstico cinesiológico...
+[P] PLANO: Conduta fisioterapêutica...`;
+        };
+
+        AndroidOS.saveNotes = function() {
+            const val = document.getElementById('soap-editor')?.value;
+            localStorage.setItem('rhuther_android_notes', val);
+            this.showToast("SOAP", "Anotações salvas com sucesso!");
+        };
+
+        // Pomodoro logic
+        AndroidOS.pomoTime = 1500;
+        AndroidOS.pomoTimer = null;
+
+        AndroidOS.startPomo = function() {
+            if (this.pomoTimer) return;
+            this.pomoTimer = setInterval(() => {
+                if (this.pomoTime > 0) {
+                    this.pomoTime--;
+                    const m = String(Math.floor(this.pomoTime / 60)).padStart(2, '0');
+                    const s = String(this.pomoTime % 60).padStart(2, '0');
+                    document.getElementById('pomo-clock').innerText = `${m}:${s}`;
+                } else {
+                    clearInterval(this.pomoTimer);
+                    this.pomoTimer = null;
+                    this.showToast("Pomodoro", "Tempo de estudo concluído!");
+                }
+            }, 1000);
+        };
+
+        AndroidOS.resetPomo = function() {
+            clearInterval(this.pomoTimer);
+            this.pomoTimer = null;
+            this.pomoTime = 1500;
+            document.getElementById('pomo-clock').innerText = '25:00';
+        };
+
+        AndroidOS.execCmd = function(cmd) {
+            const out = document.getElementById('term-out');
+            const input = document.getElementById('term-in');
+            if (!out || !input) return;
+
+            const trimmed = cmd.trim().toLowerCase();
+            input.value = '';
+
+            const line = document.createElement('div');
+            line.innerHTML = `<span class="text-teal-500">$</span> ${trimmed}`;
+            out.appendChild(line);
+
+            let res = '';
+            if (trimmed === 'ajuda') res = 'Comandos: ajuda, sobre, manguito, limpar';
+            else if (trimmed === 'sobre') res = 'RHUTHER OS Android Edition v1.0';
+            else if (trimmed === 'manguito') res = 'Supraespinal, Infraespinal, Redondo Menor, Subescapular.';
+            else if (trimmed === 'limpar') { out.innerHTML = ''; return; }
+            else res = `Comando '${trimmed}' desconhecido.`;
+
+            const resLine = document.createElement('div');
+            resLine.className = 'text-slate-300 pl-2';
+            resLine.innerText = res;
+            out.appendChild(resLine);
+        };
+
+        window.onload = function() {
+            AndroidOS.init();
+        };
+    </script>
+</body>
+</html>
