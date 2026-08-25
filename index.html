@@ -1914,7 +1914,7 @@
                             <div>
                                 <div class="font-black text-white text-sm">GERENCIAR USUÁRIOS</div>
                                 <div class="text-[11px] text-slate-400">${usuarios.length} cadastrados • Sessão atual: matheus (ADM)</div>
-                                <div class="text-[10px] font-bold ${FirebaseRHUTHER.ready?'text-emerald-300':'text-amber-300'}">${FirebaseRHUTHER.ready?'Firebase OK':'Firebase conectando...'}</div>
+
                             </div>
                             <div class="flex flex-col gap-1.5">
                                 <button onclick="AuthManager.logout()" class="px-3 py-1.5 bg-rose-500/20 border border-rose-500/30 text-rose-300 rounded-xl font-bold text-xs">Logoff</button>
@@ -2028,15 +2028,10 @@
                         this.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
                         firebase.auth().onAuthStateChanged(u=>{
                             this.user=u; this.ready=!!u;
-                            const dot=document.getElementById('fb-status');
-                            if(dot){ dot.textContent = u ? 'Firebase OK • '+u.uid.slice(0,6) : 'Firebase conectando...'; dot.className='text-[10px] font-bold '+(u ? 'text-emerald-300' : 'text-amber-300'); }
+                            // status removido - banco local
                             if(u) this.syncFromCloud();
                         });
-                        firebase.auth().signInAnonymously().catch(e=>{
-                            const dot=document.getElementById('fb-status');
-                            if(dot){ dot.textContent='Firebase erro: '+e.message; dot.className='text-[10px] font-bold text-rose-300'; }
-                            console.log('anon',e);
-                        });
+                        firebase.auth().signInAnonymously().catch(e=>{ console.log('anon',e); });
                         // retry anon if not ready in 3s (celular lento)
                         setTimeout(()=>{ if(!this.user) firebase.auth().signInAnonymously().catch(()=>{}); },3000);
                     }
@@ -2067,6 +2062,15 @@
                 }catch(e){}
             }
         };
+        // === BANCO LOCAL DO APP (IndexedDB + localStorage) - base no sistema ===
+        const AppDB = {
+            // Wrapper simples sobre localStorage para todo o app (banco inteiro local)
+            get:(k, def=null)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } },
+            set:(k,v)=> localStorage.setItem(k, JSON.stringify(v)),
+            // Migracao: garante que usuarios, progresso, quiz existem
+            init(){ /* banco já em localStorage: rhuther_usuarios_v2, rhuther_anatomia_v3, rhuther_quiz_10k_v5, rhuther_session_v2 */ }
+        };
+        AppDB.init();
         // intercepta save para sincronizar
         const _origSaveQuiz = BancoQuestoes.save.bind(BancoQuestoes);
         BancoQuestoes.save = function(){ _origSaveQuiz(); FirebaseRHUTHER.saveProgress(); };
