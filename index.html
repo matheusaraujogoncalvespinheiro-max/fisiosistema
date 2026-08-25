@@ -292,6 +292,17 @@
                         <i data-lucide="mic" class="w-4 h-4 text-slate-400"></i>
                     </div>
 
+                    <!-- LOGGED USER BANNER -->
+                    <div id="user-welcome" class="p-3 bg-gradient-to-r from-teal-600 to-cyan-600 rounded-3xl flex items-center gap-3 shadow-lg">
+                        <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white font-black text-sm" id="user-avatar">U</div>
+                        <div class="flex-1">
+                            <div class="text-[10px] font-bold tracking-widest text-white/80">BEM-VINDO</div>
+                            <div id="user-name-home" class="font-black text-white text-sm leading-tight">Carregando...</div>
+                            <div id="user-login-home" class="text-[11px] text-white/80"></div>
+                        </div>
+                        <button onclick="AuthManager.logout()" class="px-3 py-1.5 bg-white/20 border border-white/30 text-white rounded-xl font-bold text-xs">Sair</button>
+                    </div>
+
                     <!-- Daily Physio Flashcard / Study Widget -->
                     <div onclick="AndroidOS.openApp('quiz')" class="p-4 bg-gradient-to-r from-teal-900/60 to-slate-900/80 rounded-3xl border border-teal-500/30 cursor-pointer hover:border-teal-400 transition shadow-lg">
                         <div class="flex justify-between items-center mb-1">
@@ -1738,7 +1749,17 @@
                 this.showLogin();
             },
             showLogin(){ document.getElementById('login-screen')?.classList.remove('hidden'); document.getElementById('phone-frame')?.classList.add('opacity-20','pointer-events-none'); lucide.createIcons(); },
-            showApp(){ document.getElementById('login-screen')?.classList.add('hidden'); document.getElementById('phone-frame')?.classList.remove('opacity-20','pointer-events-none'); const who=document.getElementById('shade-date'); if(who && this.current) who.innerHTML=`Bem-vindo, ${this.current.nome||this.current.login} <span class="ml-2 px-2 py-0.5 rounded-full bg-teal-500 text-slate-950 text-[10px]">${this.isAdmin?'ADM':'ALUNO'}</span>`; this.atualizarHomeNotificacao(); },
+            showApp(){
+                document.getElementById('login-screen')?.classList.add('hidden');
+                document.getElementById('phone-frame')?.classList.remove('opacity-20','pointer-events-none');
+                const who=document.getElementById('shade-date');
+                if(who && this.current) who.innerHTML=`Bem-vindo, ${this.current.nome||this.current.login} <span class="ml-2 px-2 py-0.5 rounded-full bg-teal-500 text-slate-950 text-[10px]">${this.isAdmin?'ADM':'ALUNO'}</span>`;
+                const nameEl=document.getElementById('user-name-home');
+                const loginEl=document.getElementById('user-login-home');
+                const avEl=document.getElementById('user-avatar');
+                if(nameEl && this.current){ nameEl.textContent=this.current.nome||this.current.login; if(loginEl) loginEl.textContent='@'+this.current.login + (this.isAdmin?' • Administrador':''); if(avEl) avEl.textContent=(this.current.nome||this.current.login).charAt(0).toUpperCase(); }
+                this.atualizarHomeNotificacao();
+            },
             getUsuarios(){
                 try{ return JSON.parse(localStorage.getItem(this.STORAGE_USERS)||'[]'); }catch(e){ return []; }
             },
@@ -1768,22 +1789,45 @@
                     localStorage.setItem(this.STORAGE_SESSION, JSON.stringify(this.current));
                     this.showApp(); AndroidOS.showToast('Bem-vindo ADM','Painel liberado'); return;
                 }
-                // buscar usuarios locais + Firebase
+                // buscar usuarios locais + Firebase (multi-device)
                 let usuarios=this.getUsuarios();
-                // tenta Firebase
+                let firebaseErro='';
                 if(FirebaseRHUTHER.db){
                     try{
                         const snap=await FirebaseRHUTHER.db.collection('usuarios').doc(login).get();
                         if(snap.exists){
                             const d=snap.data();
-                            // atualiza local
                             const idx=usuarios.findIndex(u=>u.login===login);
                             if(idx>=0) usuarios[idx]=d; else usuarios.push(d);
-                            this.saveUsuarios(usuarios);
+                            localStorage.setItem(this.STORAGE_USERS, JSON.stringify(usuarios));
+                        } else {
+                            // tenta busca geral se doc nao existe (lista)
+                            try{
+                                const qs=await FirebaseRHUTHER.db.collection('usuarios').where('login','==',login).limit(1).get();
+                                if(!qs.empty){
+                                    const d=qs.docs[0].data();
+                                    const idx=usuarios.findIndex(u=>u.login===login);
+                                    if(idx>=0) usuarios[idx]=d; else usuarios.push(d);
+                                    localStorage.setItem(this.STORAGE_USERS, JSON.stringify(usuarios));
+                                }
+                            }catch(e2){ firebaseErro=e2.message; }
                         }
-                    }catch(e){}
+                    }catch(e){ firebaseErro=e.message; console.log('Firebase usuarios fetch', e); }
                 }
-                const u=usuarios.find(x=>x.login===login && x.senha===senha);
+                let u=usuarios.find(x=>x.login===login && x.senha===senha);
+                // se nao achou local, tenta recarregar do Firestore lista completa (para celular novo)
+                if(!u && FirebaseRHUTHER.db && !firebaseErro){
+                    try{
+                        const all=await FirebaseRHUTHER.db.collection('usuarios').get();
+                        all.forEach(doc=>{ const d=doc.data(); if(!usuarios.find(x=>x.login===d.login)) usuarios.push(d); });
+                        localStorage.setItem(this.STORAGE_USERS, JSON.stringify(usuarios));
+                        u=usuarios.find(x=>x.login===login && x.senha===senha);
+                    }catch(e){ firebaseErro=e.message; }
+                }
+                if(firebaseErro && !u){
+                    errEl.innerHTML='Erro Firebase: '+firebaseErro+'<br><span class="text-amber-300">Dica: abra via https://matheusaraujogoncalvespinheiro-max.github.io/fisiosistema/ e ative Auth Anônimo no Firebase Console.</span>';
+                    errEl.classList.remove('hidden'); return;
+                }
                 if(!u){ errEl.textContent='Login ou senha inválidos.'; errEl.classList.remove('hidden'); AndroidOS.playBeep(250); return; }
                 if(u.ativo===false){ errEl.textContent='Usuário desativado pelo ADM.'; errEl.classList.remove('hidden'); return; }
                 this.current={login:u.login, nome:u.nome, notificacao:u.notificacao||''};
