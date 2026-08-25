@@ -1765,14 +1765,38 @@
             },
             saveUsuarios(arr){
                 localStorage.setItem(this.STORAGE_USERS, JSON.stringify(arr));
-                // sync Firebase se online
-                if(FirebaseRHUTHER.db && FirebaseRHUTHER.user){
+                const push = ()=>{
+                    const db=FirebaseRHUTHER.db;
+                    const user=firebase.auth().currentUser || FirebaseRHUTHER.user;
+                    if(!db || !user){
+                        // tenta de novo em 1s (celular)
+                        setTimeout(push, 1000);
+                        return;
+                    }
                     arr.forEach(u=>{
-                        FirebaseRHUTHER.db.collection('usuarios').doc(u.login).set({
+                        db.collection('usuarios').doc(u.login).set({
                             login:u.login, nome:u.nome, senha:u.senha, notificacao:u.notificacao||'', ativo:u.ativo!==false, atualizadoEm: new Date().toISOString()
-                        }, {merge:true}).catch(()=>{});
+                        }, {merge:true}).catch(e=>console.log('push usuarios',e));
                     });
+                    // feedback
+                    const msg=document.getElementById('adm-add-msg');
+                    if(msg && arr.length) setTimeout(()=>{ if(msg.textContent.includes('criado')) msg.textContent+=' • Sincronizado para celular'; },300);
+                };
+                push();
+            },
+            async forcarSyncCelular(){
+                const arr=this.getUsuarios();
+                if(!arr.length){ AndroidOS.showToast('Sync','Nenhum usuário local'); return; }
+                let ok=0, fail=0;
+                for(let u of arr){
+                    try{
+                        await FirebaseRHUTHER.db.collection('usuarios').doc(u.login).set({
+                            login:u.login, nome:u.nome, senha:u.senha, notificacao:u.notificacao||'', ativo:u.ativo!==false, atualizadoEm: new Date().toISOString()
+                        }, {merge:true});
+                        ok++;
+                    }catch(e){ fail++; }
                 }
+                AndroidOS.showToast('Firebase', ok+' sincronizados, '+fail+' falhas. Agora teste no celular.');
             },
             async login(){
                 const loginEl=document.getElementById('login-user');
@@ -1890,8 +1914,12 @@
                             <div>
                                 <div class="font-black text-white text-sm">GERENCIAR USUÁRIOS</div>
                                 <div class="text-[11px] text-slate-400">${usuarios.length} cadastrados • Sessão atual: matheus (ADM)</div>
+                                <div class="text-[10px] font-bold ${FirebaseRHUTHER.ready?'text-emerald-300':'text-amber-300'}">${FirebaseRHUTHER.ready?'Firebase OK':'Firebase conectando...'}</div>
                             </div>
-                            <button onclick="AuthManager.logout()" class="px-3 py-1.5 bg-rose-500/20 border border-rose-500/30 text-rose-300 rounded-xl font-bold text-xs">Logoff</button>
+                            <div class="flex flex-col gap-1.5">
+                                <button onclick="AuthManager.logout()" class="px-3 py-1.5 bg-rose-500/20 border border-rose-500/30 text-rose-300 rounded-xl font-bold text-xs">Logoff</button>
+                                <button onclick="AuthManager.forcarSyncCelular()" class="px-3 py-1.5 bg-teal-500 text-slate-950 rounded-xl font-black text-xs">Sync Celular</button>
+                            </div>
                         </div>
                         <div class="grid gap-2 bg-slate-950 rounded-2xl p-3 border border-slate-800">
                             <div class="font-black text-teal-300 text-xs">ADICIONAR USUÁRIO</div>
@@ -1991,17 +2019,26 @@
                 appId: "1:172086759308:web:743ce5eead603c552fd0a9",
                 measurementId: "G-7VMD5BMB5M"
             },
-            app: null, db: null, user: null,
+            app: null, db: null, user: null, ready:false,
             init(){
                 try {
                     if(typeof firebase !== 'undefined'){
                         this.app = firebase.initializeApp(this.config);
                         this.db = firebase.firestore();
-                        // offline persistence para celular
                         this.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
-                        firebase.auth().onAuthStateChanged(u=>{ this.user=u; if(u) this.syncFromCloud(); });
-                        // login anonimo para celular sem cadastro
-                        firebase.auth().signInAnonymously().catch(()=>{});
+                        firebase.auth().onAuthStateChanged(u=>{
+                            this.user=u; this.ready=!!u;
+                            const dot=document.getElementById('fb-status');
+                            if(dot){ dot.textContent = u ? 'Firebase OK • '+u.uid.slice(0,6) : 'Firebase conectando...'; dot.className='text-[10px] font-bold '+(u ? 'text-emerald-300' : 'text-amber-300'); }
+                            if(u) this.syncFromCloud();
+                        });
+                        firebase.auth().signInAnonymously().catch(e=>{
+                            const dot=document.getElementById('fb-status');
+                            if(dot){ dot.textContent='Firebase erro: '+e.message; dot.className='text-[10px] font-bold text-rose-300'; }
+                            console.log('anon',e);
+                        });
+                        // retry anon if not ready in 3s (celular lento)
+                        setTimeout(()=>{ if(!this.user) firebase.auth().signInAnonymously().catch(()=>{}); },3000);
                     }
                 } catch(e){ console.log('Firebase offline', e); }
             },
