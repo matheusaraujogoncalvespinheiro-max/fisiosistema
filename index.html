@@ -1429,8 +1429,8 @@
                     <div class="grid gap-3">
                 `;
                 this.capitulos.forEach((cap, idx)=>{
-                    const liberado = idx===0 || this.progresso[idx];
-                    const feito = this.progresso[idx+1];
+                    const feito = !!this.progresso[idx];
+                    const liberado = idx===0 || !!this.progresso[idx-1] || feito;
                     const atual = idx===this.capituloAtual;
                     html+=`
                     <div class="rounded-3xl border-2 overflow-hidden ${feito?'border-emerald-500/50 bg-emerald-950/20':atual?'border-teal-400 bg-slate-900':liberado?'border-slate-700 bg-slate-900':'border-slate-800 bg-slate-900/60 opacity-60'}">
@@ -1471,12 +1471,26 @@
                 if(this.capitulos[this.capituloAtual]) this.abrirCapitulo(this.capituloAtual);
             },
             abrirCapitulo(idx){
-                const liberado = idx===0 || this.progresso[idx];
+                const liberado = idx===0 || !!this.progresso[idx-1] || !!this.progresso[idx];
                 if(!liberado){ AndroidOS.showToast('Bloqueado','Conclua o anterior com 3/4'); return; }
                 this.capituloAtual=idx; this.save();
                 const el=document.getElementById(`cap-${idx}`);
                 if(el) el.classList.toggle('hidden');
-                if(!el.classList.contains('hidden')) this.renderQuiz(idx);
+                if(!el.classList.contains('hidden')){
+                    this.renderQuiz(idx);
+                    // se já concluído, mostra badge
+                    if(this.progresso[idx]){
+                        setTimeout(()=>{
+                            const capEl=document.getElementById(`cap-${idx}`);
+                            if(capEl && !capEl.querySelector('.concluido-badge')){
+                                const badge=document.createElement('div');
+                                badge.className='concluido-badge p-3 rounded-2xl bg-emerald-500 text-white font-black text-xs text-center mt-3';
+                                badge.innerHTML='✓ CONCLUÍDO - Você já completou este nível';
+                                capEl.appendChild(badge);
+                            }
+                        },100);
+                    }
+                }
                 lucide.createIcons();
             },
             renderQuiz(idx){
@@ -1531,12 +1545,24 @@
                 const resEl=document.getElementById(`quiz-result-${idx}`);
                 resEl.classList.remove('hidden');
                 if(acertos>=3){
+                    this.progresso[idx]=true;
                     this.progresso[idx+1]=true;
                     this.save();
-                    resEl.className='p-3 rounded-2xl text-xs text-center bg-emerald-950 border border-emerald-500 text-emerald-200 font-bold';
-                    resEl.innerHTML=`🎉 ${acertos}/4! Atividade concluída. Próximo liberado!`;
+                    resEl.className='p-3 rounded-2xl text-xs text-center bg-emerald-950 border border-emerald-500 text-emerald-200 font-bold space-y-2';
+                    resEl.innerHTML=`🎉 ${acertos}/4! <b>CONCLUÍDO</b> - Atividade concluída!`+`<div class="mt-2 p-2 rounded-xl bg-emerald-500 text-white font-black text-xs">✓ NÍVEL CONCLUÍDO</div><div class="text-emerald-300">Próximo liberado!</div>`;
+                    // marca visual dentro do capitulo
+                    const capEl=document.getElementById(`cap-${idx}`);
+                    if(capEl){
+                        let badge=capEl.querySelector('.concluido-badge');
+                        if(!badge){
+                            badge=document.createElement('div');
+                            badge.className='concluido-badge p-3 rounded-2xl bg-emerald-500 text-white font-black text-xs text-center mt-3';
+                            badge.innerHTML='✓ CONCLUÍDO - Você já completou este nível';
+                            capEl.appendChild(badge);
+                        }
+                    }
                     AndroidOS.playBeep(900);
-                    setTimeout(()=> this.render(), 1200);
+                    setTimeout(()=> this.render(), 1500);
                 } else {
                     resEl.className='p-3 rounded-2xl text-xs text-center bg-rose-950 border border-rose-500 text-rose-200';
                     resEl.innerHTML=`${acertos}/4. Precisa de 3 para avançar. Revise e tente novamente.`;
