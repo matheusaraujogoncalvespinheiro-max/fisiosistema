@@ -185,7 +185,7 @@
                 </div>
                 <div id="login-error" class="hidden p-3 rounded-2xl bg-rose-950/60 border border-rose-500/30 text-rose-200 text-xs text-center"></div>
                 <button onclick="AuthManager.login()" class="w-full py-3.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-slate-950 rounded-2xl font-black text-sm shadow-lg shadow-teal-500/20 active:scale-[0.98] transition">ENTRAR</button>
-                <p class="text-[11px] text-center text-slate-500">Após o primeiro login, entra direto. Só pede novamente se fizer logoff.</p>
+                <p class="text-[11px] text-center text-slate-500">100% online — requer internet. Após login, entra direto.</p>
             </div>
             <p class="text-center text-[10px] text-slate-600 opacity-0">RHUTHER OS</p>
         </div>
@@ -1401,7 +1401,7 @@
             load(){
                 try{ const s=JSON.parse(localStorage.getItem(this.STORAGE_KEY)||'{}'); this.progresso=s.progresso||{}; this.capituloAtual=s.capituloAtual||0; }catch(e){}
             },
-            save(){ localStorage.setItem(this.STORAGE_KEY, JSON.stringify({progresso:this.progresso, capituloAtual:this.capituloAtual})); },
+            save(){ localStorage.setItem(this.STORAGE_KEY, JSON.stringify({progresso:this.progresso, capituloAtual:this.capituloAtual})); if(FirebaseRHUTHER.db && AuthManager.current){ const uid=(FirebaseRHUTHER.user&&FirebaseRHUTHER.user.uid)||'anon_'+AuthManager.current.login; FirebaseRHUTHER.db.collection('progress').doc(uid).set({anatomia:{progresso:this.progresso,capituloAtual:this.capituloAtual}, updatedAt: firebase.firestore.FieldValue.serverTimestamp()}, {merge:true}).catch(()=>{}); } },
             onOpen(){ this.load(); this.render(); lucide.createIcons(); },
             render(){
                 const root = document.getElementById('app-body');
@@ -1646,7 +1646,7 @@
                 return {nivel:lvl, materia:mat, conteudo, questoes};
             },
             load(){ try{ const s=JSON.parse(localStorage.getItem(this.STORAGE_KEY)||'{}'); this.level=s.level||1; if(this.level>10000) this.level=1; }catch(e){ this.level=1; } },
-            save(){ localStorage.setItem(this.STORAGE_KEY, JSON.stringify({level:this.level})); },
+            save(){ localStorage.setItem(this.STORAGE_KEY, JSON.stringify({level:this.level})); if(FirebaseRHUTHER.db && AuthManager.current){ const uid = (FirebaseRHUTHER.user&&FirebaseRHUTHER.user.uid)||'anon_'+AuthManager.current.login; FirebaseRHUTHER.db.collection('progress').doc(uid).set({quizLevel:this.level, updatedAt: firebase.firestore.FieldValue.serverTimestamp()}, {merge:true}).catch(()=>{}); } },
             respostas:{}, lock:false,
             onOpen(){ this.load(); this.render(); lucide.createIcons(); },
             render(){
@@ -1760,29 +1760,42 @@
                 if(nameEl && this.current){ nameEl.textContent=this.current.nome||this.current.login; if(loginEl) loginEl.textContent='@'+this.current.login + (this.isAdmin?' • Administrador':''); if(avEl) avEl.textContent=(this.current.nome||this.current.login).charAt(0).toUpperCase(); }
                 this.atualizarHomeNotificacao();
             },
+            // 100% ONLINE - busca do Firebase (com cache local apenas temporario)
             getUsuarios(){
                 try{ return JSON.parse(localStorage.getItem(this.STORAGE_USERS)||'[]'); }catch(e){ return []; }
             },
+            async fetchUsuariosOnline(){
+                if(!FirebaseRHUTHER.db) return this.getUsuarios();
+                try{
+                    const snap = await FirebaseRHUTHER.db.collection('usuarios').get();
+                    const arr = [];
+                    snap.forEach(doc=> arr.push(doc.data()));
+                    localStorage.setItem(this.STORAGE_USERS, JSON.stringify(arr));
+                    return arr;
+                }catch(e){ console.log('fetchUsuariosOnline', e); return this.getUsuarios(); }
+            },
             saveUsuarios(arr){
+                // 100% ONLINE - Firestore é fonte da verdade, localStorage é cache
                 localStorage.setItem(this.STORAGE_USERS, JSON.stringify(arr));
-                const push = ()=>{
-                    const db=FirebaseRHUTHER.db;
-                    const user=firebase.auth().currentUser || FirebaseRHUTHER.user;
-                    if(!db || !user){
-                        // tenta de novo em 1s (celular)
-                        setTimeout(push, 1000);
-                        return;
+                const db=FirebaseRHUTHER.db;
+                if(!db){ console.log('Firestore offline, salvando local'); return; }
+                // garante auth anonimo
+                const doPush = async ()=>{
+                    let user = FirebaseRHUTHER.user || (typeof firebase!=='undefined' && firebase.auth().currentUser);
+                    if(!user){
+                        try{ await firebase.auth().signInAnonymously(); }catch(e){}
+                        await new Promise(r=>setTimeout(r,800));
+                        user = FirebaseRHUTHER.user || firebase.auth().currentUser;
                     }
-                    arr.forEach(u=>{
-                        db.collection('usuarios').doc(u.login).set({
-                            login:u.login, nome:u.nome, senha:u.senha, notificacao:u.notificacao||'', ativo:u.ativo!==false, atualizadoEm: new Date().toISOString()
-                        }, {merge:true}).catch(e=>console.log('push usuarios',e));
-                    });
-                    // feedback
-                    const msg=document.getElementById('adm-add-msg');
-                    if(msg && arr.length) setTimeout(()=>{ if(msg.textContent.includes('criado')) msg.textContent+=' • Sincronizado para celular'; },300);
+                    for(let u of arr){
+                        try{
+                            await db.collection('usuarios').doc(u.login).set({
+                                login:u.login, nome:u.nome, senha:u.senha, notificacao:u.notificacao||'', ativo:u.ativo!==false, atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+                            }, {merge:true});
+                        }catch(e){ console.log('push usuarios',e); }
+                    }
                 };
-                push();
+                doPush();
             },
             async forcarSyncCelular(){
                 const arr=this.getUsuarios();
@@ -1813,45 +1826,41 @@
                     localStorage.setItem(this.STORAGE_SESSION, JSON.stringify(this.current));
                     this.showApp(); AndroidOS.showToast('Bem-vindo ADM','Painel liberado'); return;
                 }
-                // buscar usuarios locais + Firebase (multi-device)
-                let usuarios=this.getUsuarios();
-                let firebaseErro='';
-                if(FirebaseRHUTHER.db){
-                    try{
-                        const snap=await FirebaseRHUTHER.db.collection('usuarios').doc(login).get();
-                        if(snap.exists){
-                            const d=snap.data();
-                            const idx=usuarios.findIndex(u=>u.login===login);
-                            if(idx>=0) usuarios[idx]=d; else usuarios.push(d);
-                            localStorage.setItem(this.STORAGE_USERS, JSON.stringify(usuarios));
-                        } else {
-                            // tenta busca geral se doc nao existe (lista)
-                            try{
-                                const qs=await FirebaseRHUTHER.db.collection('usuarios').where('login','==',login).limit(1).get();
-                                if(!qs.empty){
-                                    const d=qs.docs[0].data();
-                                    const idx=usuarios.findIndex(u=>u.login===login);
-                                    if(idx>=0) usuarios[idx]=d; else usuarios.push(d);
-                                    localStorage.setItem(this.STORAGE_USERS, JSON.stringify(usuarios));
-                                }
-                            }catch(e2){ firebaseErro=e2.message; }
-                        }
-                    }catch(e){ firebaseErro=e.message; console.log('Firebase usuarios fetch', e); }
+                // 100% ONLINE - exige internet, busca direto no Firestore
+                if(!navigator.onLine){
+                    errEl.textContent='Sem internet. Conecte-se para logar (banco 100% online).';
+                    errEl.classList.remove('hidden'); return;
+                }
+                if(!FirebaseRHUTHER.db){
+                    errEl.textContent='Firebase não iniciado. Recarregue a página.';
+                    errEl.classList.remove('hidden'); return;
+                }
+                // garante auth anonimo
+                if(!FirebaseRHUTHER.user && typeof firebase!=='undefined'){
+                    try{ await firebase.auth().signInAnonymously(); await new Promise(r=>setTimeout(r,600)); }catch(e){}
+                }
+                let usuarios = [];
+                try{
+                    const snap = await FirebaseRHUTHER.db.collection('usuarios').doc(login).get();
+                    if(snap.exists){
+                        usuarios = [snap.data()];
+                    } else {
+                        const qs = await FirebaseRHUTHER.db.collection('usuarios').where('login','==',login).limit(1).get();
+                        if(!qs.empty) usuarios = [qs.docs[0].data()];
+                    }
+                    // cache local
+                    if(usuarios.length) localStorage.setItem(this.STORAGE_USERS, JSON.stringify(usuarios));
+                }catch(e){
+                    errEl.textContent='Erro Firebase (online): '+e.message+' — verifique Firestore Rules e Auth Anônimo.';
+                    errEl.classList.remove('hidden'); return;
                 }
                 let u=usuarios.find(x=>x.login===login && x.senha===senha);
-                // se nao achou local, tenta recarregar do Firestore lista completa (para celular novo)
-                if(!u && FirebaseRHUTHER.db && !firebaseErro){
-                    try{
-                        const all=await FirebaseRHUTHER.db.collection('usuarios').get();
-                        all.forEach(doc=>{ const d=doc.data(); if(!usuarios.find(x=>x.login===d.login)) usuarios.push(d); });
-                        localStorage.setItem(this.STORAGE_USERS, JSON.stringify(usuarios));
-                        u=usuarios.find(x=>x.login===login && x.senha===senha);
-                    }catch(e){ firebaseErro=e.message; }
+                if(!u){
+                    // admin já tratado acima, então falha
+                    errEl.textContent='Login ou senha inválidos (verificado online).';
+                    errEl.classList.remove('hidden'); AndroidOS.playBeep(250); return;
                 }
-                if(firebaseErro){
-                    console.log('Firebase aviso (usando banco local):', firebaseErro);
-                    // não bloqueia - tenta login local
-                }
+                if(u.ativo===false){ errEl.textContent='Usuário desativado pelo ADM.'; errEl.classList.remove('hidden'); return; }
                 if(!u){ errEl.textContent='Login ou senha inválidos.'; errEl.classList.remove('hidden'); AndroidOS.playBeep(250); return; }
                 if(u.ativo===false){ errEl.textContent='Usuário desativado pelo ADM.'; errEl.classList.remove('hidden'); return; }
                 this.current={login:u.login, nome:u.nome, notificacao:u.notificacao||''};
