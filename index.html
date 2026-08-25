@@ -191,6 +191,14 @@
         </div>
     </div>
 
+    <!-- BANNER ATUALIZACAO -->
+    <div id="update-banner" class="hidden fixed top-0 left-0 right-0 z-[200] bg-amber-500 text-slate-950 px-4 py-3 flex items-center justify-between gap-3 shadow-xl">
+        <div class="flex items-center gap-2">
+            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+            <span class="font-black text-sm">chegou atualização por favor atualize</span>
+        </div>
+        <button onclick="location.reload(true)" class="px-4 py-1.5 bg-slate-950 text-white rounded-xl font-black text-xs whitespace-nowrap">Atualize</button>
+    </div>
     <!-- ANDROID DEVICE CONTAINER (Simulates Phone/Tablet Frame or Fullscreen on Mobile) -->
     <div id="phone-frame" class="relative w-full h-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl h-full sm:h-[95vh] sm:rounded-[40px] sm:border-[8px] sm:border-slate-800 shadow-2xl overflow-hidden flex flex-col wp-material-1 transition-all duration-500">
         
@@ -2159,10 +2167,44 @@
         const _origSaveAna = EstudoAnatomia.save.bind(EstudoAnatomia);
         EstudoAnatomia.save = function(){ _origSaveAna(); FirebaseRHUTHER.saveProgress(); };
 
+        // === CHECK ATUALIZACAO (mostra banner quando fizer deploy) ===
+        const UpdateChecker = {
+            currentVersion: null,
+            async check(){
+                try{
+                    const res = await fetch('version.json?t=' + Date.now(), {cache: 'no-store'});
+                    if(!res.ok) return;
+                    const data = await res.json();
+                    const ver = data.version;
+                    if(!this.currentVersion){
+                        this.currentVersion = ver;
+                        localStorage.setItem('rhuther_version', ver);
+                        return;
+                    }
+                    const saved = localStorage.getItem('rhuther_version');
+                    if(ver && ver !== (saved || this.currentVersion)){
+                        this.show();
+                    }
+                }catch(e){}
+            },
+            show(){
+                const b = document.getElementById('update-banner');
+                if(b){ b.classList.remove('hidden'); lucide.createIcons(); }
+            },
+            init(){
+                this.currentVersion = localStorage.getItem('rhuther_version');
+                // checa a cada 30s e ao voltar para aba
+                setInterval(()=>this.check(), 30000);
+                document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) this.check(); });
+                // primeira checagem apos 5s
+                setTimeout(()=>this.check(), 5000);
+            }
+        };
         window.onload = function() {
             AndroidOS.init();
             FirebaseRHUTHER.init();
             AuthManager.init();
+            UpdateChecker.init();
             // esconder app ADM se nao for admin
             setTimeout(()=>{ if(!AuthManager.isAdmin){ /* mantém login */ } },200);
         };
