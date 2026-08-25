@@ -237,6 +237,10 @@
                     <i data-lucide="moon" class="w-5 h-5"></i>
                     <span class="text-[10px] font-bold">Não Perturbe</span>
                 </button>
+                <button onclick="AuthManager.logout()" class="quick-toggle p-3 rounded-2xl bg-rose-600 text-white flex flex-col items-center justify-center space-y-1 transition active:scale-95 col-span-4 mt-1">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold">Sair (Logoff)</span>
+                </button>
             </div>
 
             <!-- Brightness Slider -->
@@ -957,6 +961,11 @@
                                     <button onclick="AndroidOS.setBg('wp-material-2')" class="h-16 rounded-2xl wp-material-2 border-2 border-white/20"></button>
                                     <button onclick="AndroidOS.setBg('wp-material-3')" class="h-16 rounded-2xl wp-material-3 border-2 border-white/20"></button>
                                 </div>
+                            </div>
+
+                            <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-2">
+                                <button onclick="AuthManager.logout()" class="w-full py-2.5 bg-rose-600 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> Sair / Trocar usuário (Logoff)</button>
+                                <div class="text-[11px] text-slate-500 text-center">Faz logoff e volta para tela de login</div>
                             </div>
 
                             <div class="p-4 bg-slate-900 rounded-3xl border border-white/10 space-y-1">
