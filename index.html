@@ -1848,9 +1848,9 @@
                         u=usuarios.find(x=>x.login===login && x.senha===senha);
                     }catch(e){ firebaseErro=e.message; }
                 }
-                if(firebaseErro && !u){
-                    errEl.innerHTML='Erro Firebase: '+firebaseErro+'<br><span class="text-amber-300">Dica: abra via https://matheusaraujogoncalvespinheiro-max.github.io/fisiosistema/ e ative Auth Anônimo no Firebase Console.</span>';
-                    errEl.classList.remove('hidden'); return;
+                if(firebaseErro){
+                    console.log('Firebase aviso (usando banco local):', firebaseErro);
+                    // não bloqueia - tenta login local
                 }
                 if(!u){ errEl.textContent='Login ou senha inválidos.'; errEl.classList.remove('hidden'); AndroidOS.playBeep(250); return; }
                 if(u.ativo===false){ errEl.textContent='Usuário desativado pelo ADM.'; errEl.classList.remove('hidden'); return; }

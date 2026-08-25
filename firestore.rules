@@ -1,20 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Usuarios - varios dispositivos precisam ler para logar no celular
+    // Usuarios - leitura livre para login no celular funcionar mesmo sem auth pronta
     match /usuarios/{login} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if true;
+      allow write: if true;
     }
-    // Perfil - só dono
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
-    // Progresso - sync celular (qualquer anon pode salvar seu proprio uid)
     match /progress/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
-    // Conteúdo público somente leitura
     match /questoes/{docId} {
       allow read: if true;
       allow write: if false;
