@@ -192,7 +192,7 @@
     </div>
 
     <!-- BANNER ATUALIZACAO -->
-    <div id="update-banner" class="hidden fixed top-0 left-0 right-0 z-[200] bg-amber-500 text-slate-950 px-4 py-3 flex items-center justify-between gap-3 shadow-xl">
+    <div id="update-banner" class="hidden fixed top-0 left-0 right-0 z-[200] bg-amber-500 text-slate-950 px-4 py-3 items-center justify-between gap-3 shadow-xl">
         <div class="flex items-center gap-2">
             <i data-lucide="refresh-cw" class="w-5 h-5"></i>
             <span class="font-black text-sm">chegou atualização por favor atualize</span>
@@ -2168,36 +2168,46 @@
         EstudoAnatomia.save = function(){ _origSaveAna(); FirebaseRHUTHER.saveProgress(); };
 
         // === CHECK ATUALIZACAO (mostra banner quando fizer deploy) ===
+        const APP_VERSION = "2026-08-25T01:47:43.219437Z";
         const UpdateChecker = {
             currentVersion: null,
             async check(){
                 try{
-                    const res = await fetch('version.json?t=' + Date.now(), {cache: 'no-store'});
+                    const res = await fetch('version.json?t=' + Date.now(), {cache: 'no-store', headers: {'Cache-Control':'no-cache'}});
                     if(!res.ok) return;
                     const data = await res.json();
-                    const ver = data.version;
-                    if(!this.currentVersion){
-                        this.currentVersion = ver;
-                        localStorage.setItem('rhuther_version', ver);
+                    const ver = (data.version||'').trim();
+                    if(!ver) return;
+                    const saved = localStorage.getItem('rhuther_version');
+                    // se nunca salvou, salva APP_VERSION como base, mas se ver for diferente do APP_VERSION, mostra
+                    if(!saved){
+                        localStorage.setItem('rhuther_version', APP_VERSION);
+                        if(ver !== APP_VERSION) this.show();
                         return;
                     }
-                    const saved = localStorage.getItem('rhuther_version');
-                    if(ver && ver !== (saved || this.currentVersion)){
+                    if(ver !== saved){
+                        console.log('Nova versao detectada', ver, 'saved', saved);
                         this.show();
                     }
-                }catch(e){}
+                }catch(e){ console.log('check update', e); }
             },
             show(){
                 const b = document.getElementById('update-banner');
-                if(b){ b.classList.remove('hidden'); lucide.createIcons(); }
+                if(b){ b.classList.remove('hidden'); b.classList.add('flex'); lucide.createIcons(); 
+                // toque sonoro
+                try{ AndroidOS.playBeep(800); }catch(e){} }
             },
             init(){
+                // salva APP_VERSION se ainda nao tem
+                if(!localStorage.getItem('rhuther_version')){
+                    localStorage.setItem('rhuther_version', APP_VERSION);
+                }
                 this.currentVersion = localStorage.getItem('rhuther_version');
-                // checa a cada 30s e ao voltar para aba
-                setInterval(()=>this.check(), 30000);
+                setInterval(()=>this.check(), 15000);
                 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) this.check(); });
-                // primeira checagem apos 5s
-                setTimeout(()=>this.check(), 5000);
+                setTimeout(()=>this.check(), 3000);
+                // teste manual: window.forcarAtualizacao = ()=> this.show();
+                window.forcarAtualizacao = ()=> this.show();
             }
         };
         window.onload = function() {
