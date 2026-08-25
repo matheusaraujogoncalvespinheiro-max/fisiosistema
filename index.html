@@ -1759,6 +1759,10 @@
                 const avEl=document.getElementById('user-avatar');
                 if(nameEl && this.current){ nameEl.textContent=this.current.nome||this.current.login; if(loginEl) loginEl.textContent='@'+this.current.login + (this.isAdmin?' • Administrador':''); if(avEl) avEl.textContent=(this.current.nome||this.current.login).charAt(0).toUpperCase(); }
                 this.atualizarHomeNotificacao();
+                // se for ADM, migra usuarios locais para nuvem (100% online)
+                if(this.isAdmin){
+                    setTimeout(()=>{ try{ AuthManager.forcarSyncCelular(); }catch(e){} },1500);
+                }
             },
             // 100% ONLINE - busca do Firebase (com cache local apenas temporario)
             getUsuarios(){
@@ -1826,38 +1830,43 @@
                     localStorage.setItem(this.STORAGE_SESSION, JSON.stringify(this.current));
                     this.showApp(); AndroidOS.showToast('Bem-vindo ADM','Painel liberado'); return;
                 }
-                // 100% ONLINE - exige internet, busca direto no Firestore
-                if(!navigator.onLine){
-                    errEl.textContent='Sem internet. Conecte-se para logar (banco 100% online).';
-                    errEl.classList.remove('hidden'); return;
-                }
-                if(!FirebaseRHUTHER.db){
-                    errEl.textContent='Firebase não iniciado. Recarregue a página.';
-                    errEl.classList.remove('hidden'); return;
-                }
-                // garante auth anonimo
-                if(!FirebaseRHUTHER.user && typeof firebase!=='undefined'){
-                    try{ await firebase.auth().signInAnonymously(); await new Promise(r=>setTimeout(r,600)); }catch(e){}
-                }
+                // 100% ONLINE com fallback local para não travar
                 let usuarios = [];
-                try{
-                    const snap = await FirebaseRHUTHER.db.collection('usuarios').doc(login).get();
-                    if(snap.exists){
-                        usuarios = [snap.data()];
-                    } else {
-                        const qs = await FirebaseRHUTHER.db.collection('usuarios').where('login','==',login).limit(1).get();
-                        if(!qs.empty) usuarios = [qs.docs[0].data()];
+                let usouFirebase = false;
+                if(navigator.onLine && FirebaseRHUTHER.db){
+                    try{
+                        if(!FirebaseRHUTHER.user && typeof firebase!=='undefined'){
+                            try{ await firebase.auth().signInAnonymously(); await new Promise(r=>setTimeout(r,500)); }catch(e){}
+                        }
+                        const snap = await FirebaseRHUTHER.db.collection('usuarios').doc(login).get();
+                        if(snap.exists){
+                            usuarios = [snap.data()];
+                            usouFirebase = true;
+                        } else {
+                            const qs = await FirebaseRHUTHER.db.collection('usuarios').where('login','==',login).limit(1).get();
+                            if(!qs.empty){ usuarios = [qs.docs[0].data()]; usouFirebase = true; }
+                        }
+                        if(usuarios.length) localStorage.setItem(this.STORAGE_USERS, JSON.stringify(usuarios));
+                    }catch(e){
+                        console.log('Firebase login fallback local', e);
                     }
-                    // cache local
-                    if(usuarios.length) localStorage.setItem(this.STORAGE_USERS, JSON.stringify(usuarios));
-                }catch(e){
-                    errEl.textContent='Erro Firebase (online): '+e.message+' — verifique Firestore Rules e Auth Anônimo.';
-                    errEl.classList.remove('hidden'); return;
+                }
+                // fallback local se Firebase não retornou
+                if(!usuarios.length){
+                    try{ usuarios = JSON.parse(localStorage.getItem(this.STORAGE_USERS)||'[]'); }catch(e){ usuarios=[]; }
+                    // também tenta todos do Firebase se ainda vazio e online
+                    if(!usuarios.length && FirebaseRHUTHER.db && navigator.onLine){
+                        try{
+                            const all = await FirebaseRHUTHER.db.collection('usuarios').get();
+                            const arr=[]; all.forEach(d=>arr.push(d.data()));
+                            if(arr.length){ localStorage.setItem(this.STORAGE_USERS, JSON.stringify(arr)); usuarios=arr; usouFirebase=true; }
+                        }catch(e){}
+                    }
                 }
                 let u=usuarios.find(x=>x.login===login && x.senha===senha);
                 if(!u){
-                    // admin já tratado acima, então falha
-                    errEl.textContent='Login ou senha inválidos (verificado online).';
+                    if(usouFirebase) errEl.textContent='Login ou senha inválidos (verificado online).';
+                    else errEl.textContent='Login ou senha inválidos. Verifique se o ADM criou o usuário e clique em Sync Celular no PC.';
                     errEl.classList.remove('hidden'); AndroidOS.playBeep(250); return;
                 }
                 if(u.ativo===false){ errEl.textContent='Usuário desativado pelo ADM.'; errEl.classList.remove('hidden'); return; }
